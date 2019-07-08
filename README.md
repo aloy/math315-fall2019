@@ -1,2 +1,13 @@
-# math315-fall2019
-Repository for Fall 2019 incarnation of Bayesian Statistics at Carleton College.
+# Bayesian Statistics
+
+## Fall 2019
+
+Instructor: Adam Loy
+
+Location: CMC 319
+
+Time: 4a
+
+Office hours: TBD
+
+# Materials
