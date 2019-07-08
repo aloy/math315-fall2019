@@ -19,7 +19,17 @@ Office hours: TBD
 We will use R/RStudio as our computational engine. Please install the current version of R and RStudio at
 the beginning of the term if you plan to use a local version.
 
+- Download R: https://cran.r-project.org/
+
+- Download RStudio desktop: https://www.rstudio.com/products/rstudio/download/#download
+
 The mirage server (https://mirage.mathcs.carleton.edu) is also available for your use, *but can only be accessesed on campus of via a VPN*.
+
+## JAGS
+
+We will use JAGS (Just Another Gibbs Sampler) "automate" some of the posterior sampling via MCMC this term. *Please install JAGS using prior to installing the R packages listed below.*
+
+Link to the latest version: https://sourceforge.net/projects/mcmc-jags/files/latest/download
 
 ## R packages
 
