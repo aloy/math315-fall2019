@@ -45,6 +45,24 @@ containing the R code used to generate slides, etc.
 
 # Calendar
 
+## Important dates
+
+Homework:
+
+Exam 1:
+
+Exam 2:
+
+Project
+
+- Team assignments: 
+
+- Proposal and data: 
+
+- Final submission: 
+
+## Daily schedule
+
 Date | Reading | Topic | Materials
 -----|---------|-----------|----------------
 16-Sep | | |
