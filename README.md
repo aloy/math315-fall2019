@@ -15,7 +15,7 @@ Office hours: TBD
 # Calendar
 
 Date | Reading | Topic | Materials
------|-------|-----------
+-----|---------|-----------|----------------
 16-Sep | | |
 18-Sep | | |
 20-Sep | | |
