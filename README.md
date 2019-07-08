@@ -38,7 +38,8 @@ I will post homework assignments and their solutions here. Check the folders at 
 
 ## Class materials
 
-Links to any slides and handouts are in the calendar section below.
+Links to any slides and handouts are in the calendar section below. Check the folders above for the .Rmd files
+containing the R code used to generate slides, etc.
 
 * * * 
 
