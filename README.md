@@ -75,9 +75,9 @@ Project
 
 Date | Reading | Topic | Materials
 -----|---------|-----------|----------------
-16-Sep | | |
-18-Sep | | |
-20-Sep | | |
+16-Sep | 1.1-1.2 | Welcome and probability review |
+18-Sep | 1.3-1.5 | Basic univariate inference |
+20-Sep |  | R crash course and grid approximation |
  | | |
 23-Sep | | |
 25-Sep | | |
