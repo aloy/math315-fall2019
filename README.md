@@ -57,7 +57,11 @@ containing the R code used to generate slides, etc.
 
 ## Important dates
 
-Homework:
+Homework
+
+ - Individual assignments will be due most Tuesdays and Fridays by 4:00 p.m.
+ 
+ - Team assignments will be assigned roughly every two weeks.
 
 Exam 1:
 
@@ -65,11 +69,11 @@ Exam 2:
 
 Project
 
-- Team assignments: 
+- Team assignments: 4 November by 4:00 p.m.
 
-- Proposal and data: 
+- Proposal and data: 11 November by 4:00 p.m.
 
-- Final submission: 
+- Final submission: 25 November by 3:00 p.m.
 
 ## Daily schedule
 
