@@ -8,7 +8,7 @@ Location: CMC 319
 
 Time: 4a
 
-Office hours: TBD
+Office hours: Mon 2-3, Tue 2-3, Wed 9:30-10:30, Fri 9:30-10:30, and by appointment
 
 * * * 
 
@@ -63,9 +63,9 @@ Homework
  
  - Team assignments will be assigned roughly every two weeks.
 
-Exam 1:
+Exam 1: Wednesday, October 13
 
-Exam 2:
+Exam 2: Wednesday, November 13
 
 Project
 
