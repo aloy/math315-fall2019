@@ -1,0 +1,23 @@
+---
+title: "Homework 1"
+author: "Math 315, Fall 2019"
+date: "Due 20 September by 4:00 p.m."
+fontsize: 11pt 
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+*Instructions*: Complete the following problems and submit them by 4 p.m. on the due date. Please make sure that your solution is neatly written, clearly organized, and stapled (if there are multiple pages).
+
+
+This homework is intended to review key ideas from probability (Math 265). Don't hesitate to refer to your probability book if you're a little rusty!
+
+All problems are assigned from the required textbook, *Bayesian Statistical Methods* by Reich and Ghosh.
+
+
+Chapter 1 exercises 2, 4, 8, 10, 16

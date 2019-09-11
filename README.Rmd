@@ -98,10 +98,10 @@ BIDA = *Bayesian Ideas and Data Analysis*
 
 Date | Reading | Topic | Materials
 -----|---------|-----------|----------------
-16-Sep | BSM 1.1-1.2; [BIDA 2.1](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=32) | Welcome and probability review | Slides; Handout
+16-Sep | BSM 1.1-1.2; [BIDA 2.1](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=32) | Welcome and probability review | [Slides](https://aloy.github.io/math315-fall2019/docs/01-probability-review.html#1)
 18-Sep | BSM 1.3-1.5; [BIDA 2.2-2.4](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=37) | Basic univariate inference |
 20-Sep |  | R crash course and grid approximation |
- | | |
-23-Sep | | |
-25-Sep | | |
-27-Sep | | |
+<!--  | | | -->
+<!-- 23-Sep | | | -->
+<!-- 25-Sep | | | -->
+<!-- 27-Sep | | | -->
