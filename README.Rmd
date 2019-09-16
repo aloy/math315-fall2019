@@ -17,6 +17,10 @@ Office hours: Mon 2-3, Tue 2-3, Wed 9:30-10:30, Fri 9:30-10:30, and by appointme
 
 # Materials
 
+Jump to: [Daily schedule]
+
+## [Syllabus](syllabus_math315_f2019.pdf)
+
 ## Readings
 
 The required textbook is *Bayesian Statistical Methods* by Reich and Ghosh (2019, CRC Press) both readings and problems will be assigned from this text, so please obtain a copy.

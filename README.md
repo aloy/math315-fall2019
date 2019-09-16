@@ -16,6 +16,10 @@ appointment
 
 # Materials
 
+Jump to: [Daily schedule](#daily-schedule)
+
+## [Syllabus](syllabus_math315_f2019.pdf)
+
 ## Readings
 
 The required textbook is *Bayesian Statistical Methods* by Reich and
@@ -89,7 +93,7 @@ Homework
 
   - Team assignments will be assigned roughly every two weeks.
 
-Exam 1: Wednesday, October 13
+Exam 1: Wednesday, October 16
 
 Exam 2: Wednesday, November 13
 
