@@ -6,6 +6,6 @@ Homework
 
   - Unexcused late homework will not be accepted
 
-| Due Date | Assignment       | Solution |
-| -------- | ---------------- | -------- |
-| 20-Sep   | [hw01](hw01.pdf) |          |
+| Assignment       | Due Date | Solution |
+| ---------------- | -------- | -------- |
+| [hw01](hw01.pdf) | 20-Sep   |          |

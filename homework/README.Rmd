@@ -7,6 +7,6 @@ output: github_document
 
 - Unexcused late homework will not be accepted
 
-Due Date | Assignment | Solution
+Assignment |Due Date | Solution
 -----|---------|---------
-20-Sep | [hw01](hw01.pdf)
+[hw01](hw01.pdf) | 20-Sep |
