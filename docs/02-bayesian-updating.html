@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Bayesian updating</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+    <script src="libs/kePrint/kePrint.js"></script>
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Bayesian updating
+### Math 315: Bayesian Statistics
+
+---
+
+
+class: middle, clear
+
+
+
+## 1. Comparing paradigms
+
+## 2. Discrete prior
+
+## 3. Continuous prior
+
+---
+
+# Marshall &amp; Halligan (1988)
+
+.pull-left[
+&lt;img src="figs/01-burning-house.png" width="267" /&gt;
+]
+
+.pull-right[
+.large[
+
+Simplified version of the study:
+
+- Patient (P.S.) presented with two cards in random order
+
+- Asked to identify which house she would rather live in
+
+- `\(Y=\)` # times P.S. chose non-burning house
+
+]
+]
+
+.footnote[
+.footnotesize[
+Marshall, J. C., &amp; Halligan, P. W. (1988). Blindsight and insight in visuo-spatial neglect. *Nature*, 336(6201), 766.
+]
+]
+
+
+---
+
+# Analyze the data
+
+.Large[
+Take 5 minutes and draw a conclusion about `\(\theta\)`
+
+Feel free to collaborate with your neighbor(s)
+]
+
+---
+
+# The frequentist paradigm
+
+.content-box-blue[
+.Large[
+A **frequentist procedure** quantifies uncertainty in terms of repeating the process that generated the data many times
+]
+]
+
+---
+
+# Would a frequentist ever claim that...
+
+--
+
+- .Large[
+`\(P( Y &gt; 14) = 0.75\)`?
+]
+
+--
+
+- .Large[
+`\(P( \theta &gt; 0.5) = 0.75\)`?
+]
+
+--
+
+- .Large[ 
+`\(\theta \sim {\rm Unif}\)`(0.25, 0.5)?
+]
+
+--
+
+- .Large[
+the probability that the true proportion of correct guesses is in the interval (0.64, 1) is 0.95?
+]
+
+--
+
+- .Large[
+the probability that the null hypothesis, `\(H_0: \ p = 0.5\)`, is true is 0.0002?
+]
+
+---
+
+# The Bayesian paradigm
+
+.content-box-yellow[
+.Large[
+A **Bayesian procedure** quantifies uncertainty about the parameters that remain after accounting for prior knowledge and the information in the observed data
+]
+]
+
+---
+
+# Would a Bayesian ever claim that...
+
+--
+
+- .Large[
+`\(P( Y &gt; 14) = 0.75\)`?
+]
+
+--
+
+- .Large[
+`\(P( \theta &gt; 0.5) = 0.75\)`?
+]
+
+--
+
+- .Large[ 
+`\(\theta \sim {\rm Unif}\)`(0.25, 0.5)?
+]
+
+--
+
+- .Large[
+the probability that the true proportion of correct guesses is in the interval (0.64, 1) is 0.95?
+]
+
+--
+
+- .Large[
+the probability that the null hypothesis, `\(H_0: \ p = 0.5\)`, is true is 0.0002?
+]
+
+---
+
+class: middle, inverse
+
+# Updating a discrete prior
+
+---
+
+# Design
+
+.Large[
+
+**Data:** N N N N &lt;font color = "tomato"&gt;B B&lt;/font&gt; N N N  &lt;font color = "tomato"&gt;B&lt;/font&gt; N N N N N N N (14 Ns; &lt;font color = "tomato"&gt;3 Bs&lt;/font&gt;)
+
+&lt;br&gt;
+
+**Data model:**
+
+Some true proportion of guesses, `\(\theta\)`
+
+Toss a coin with probability of heads, `\(\theta\)`
+
+&lt;br&gt;
+
+**Belief about `\(\theta\)`:**
+
+Uniform over {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9}
+
+]
+
+---
+
+# Condition
+
+
+.Large[
+
+**Posterior distribution**
+
+The distribution of `\(\theta\)` that incorporates both the prior information and the data. 
+
+i.e., the &lt;font color = "#26A69A"&gt;**posterior**&lt;/font&gt; is the &lt;font color = '#FDD835'&gt;**prior**&lt;/font&gt; *conditioned* on &lt;font color = '#9C27B0'&gt;**evidence**&lt;/font&gt;
+
+&lt;!-- 15 --&gt;
+
+`\(p(\theta | y) = {\rm Pr}(\theta = k | y)\)`
+
+
+]
+
+
+
+---
+class: clear, center, middle
+
+.Large[
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;"&gt; p &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; prior probability &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; likelihood &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; posterior plausibility (prior x likelihood) &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; posterior probability &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.1 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.0000000 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0000000 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.0000000 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.2 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.0000001 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0000000 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.0000001 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.3 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.0000112 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0000012 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.0000200 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.4 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.0003943 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0000438 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.0007053 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.5 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.0051880 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0005764 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.0092803 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.6 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.0341041 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0037893 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.0610052 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.7 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.1245218 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0138358 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.2227440 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.8 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.2392537 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0265837 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.4279761 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 0.9 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.1111111 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.1555622 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 2.5in; "&gt; 0.0172847 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 1.5in; "&gt; 0.2782690 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+]
+
+---
+class: clear, middle, center
+
+&lt;img src="02-bayesian-updating_files/figure-html/unnamed-chunk-4-1.svg" width="100%" /&gt;
+
+---
+# Sequential updating
+
+![](02-bayesian-updating_files/figure-html/unnamed-chunk-5-1.svg)&lt;!-- --&gt;
+
+
+---
+
+# Evaluate
+
+.Large[
+Bayesian inference must be supervised
+
+- Did the model malfunction?
+
+- Does the model's answer make sense?
+
+- Does the question make sense?
+
+- Check sensitivity of the answer to changes in the assumptions
+]
+
+---
+
+class: middle, inverse
+
+# Updating a continuous prior
+
+---
+
+# Design, redux
+
+.Large[
+
+**Data:** N N N N &lt;font color = "tomato"&gt;B B&lt;/font&gt; N N N  &lt;font color = "tomato"&gt;B&lt;/font&gt; N N N N N N N (14 Ns; &lt;font color = "tomato"&gt;3 Bs&lt;/font&gt;)
+
+&lt;br&gt;
+
+**Data model:**
+
+Some true proportion of guesses, `\(\theta\)`
+
+Toss a coin with probability of heads, `\(\theta\)`
+
+&lt;br&gt;
+
+**Belief about `\(\theta\)`:**
+
+Uniform over (0, 1)
+
+]
+
+---
+
+class: center, middle, clear
+
+&lt;img src="figs/002x006.png" width="575" /&gt;
+
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+- Break into groups
+
+- Derive the posteriors
+
+- Are you working with a conjugate family?
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
