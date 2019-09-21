@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Posterior analysis &amp; computation</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Posterior analysis &amp; computation
+### Math 315: Bayesian Statistics
+
+---
+
+
+class: middle, clear
+
+
+
+## 1. Summarizing the posterior
+
+## 2. Basics of Bayesian computing
+
+---
+
+# Posterior analysis
+
+.large[
+&gt; To a Bayesian, the best information one can ever have about `\(\theta\)` is to know the posterior density.
+&gt;
+&gt; — Christensen, et al; *Bayesian Ideas and Data Analysis*, p. 31
+]
+
+.center[
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-1-1.svg" width="75%" /&gt;
+]
+
+---
+
+# Point estimates
+
+.Large[
+- &lt;font color = "#9C27B0"&gt; &lt;strong&gt;Posterior mean&lt;/strong&gt; &lt;/font&gt;
+- &lt;font color = "#26A69A"&gt; &lt;strong&gt;Posterior median &lt;/strong&gt;&lt;/font&gt;
+- &lt;font color = "#FDD835"&gt; &lt;strong&gt;Posterior mode &lt;/strong&gt;&lt;/font&gt; — i.e. *maximum a posteriori* (MAP) estimate
+]
+
+.center[
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-2-1.svg" width="80%" /&gt;
+]
+
+---
+
+# Credible intervals
+
+.center[
+&lt;img src="04-intervals-probs-grid_files/figure-html/ci1-1.svg" width="80%" /&gt;
+]
+
+
+```r
+# q*() functions calculate quantiles from the specified distribution
+c(lower = qbeta(0.055, 14, 4), upper = qbeta(1 - 0.055, 14, 4))
+```
+
+```
+##     lower     upper 
+## 0.6100397 0.9126956
+```
+
+---
+
+# Credible intervals are not unique
+
+.large[Here are three 89% credible intervals]
+
+&lt;br&gt;
+
+&lt;img src="04-intervals-probs-grid_files/figure-html/ci2-1.svg" width="100%" /&gt;
+
+---
+
+# Highest Posterior Density Interval (HPDI)
+
+.center[
+
+![](04-intervals-probs-grid_files/figure-html/hpdi-1.svg)&lt;!-- --&gt;
+]
+
+---
+class: center
+![](04-intervals-probs-grid_files/figure-html/ci1-1.svg)&lt;!-- --&gt;
+
+![](04-intervals-probs-grid_files/figure-html/hpdi-1.svg)&lt;!-- --&gt;
+
+---
+
+# Testing a hypothesis
+
+.large[
+Suppose the researchers were interested in testing
+
+
+.pull-left[
+
+`\(H_0: \theta \le 0.5\)`
+
+`\(P(\theta \le 0.5 | Y = 14) = 0.004\)`
+
+![](04-intervals-probs-grid_files/figure-html/unnamed-chunk-4-1.svg)&lt;!-- --&gt;
+
+]
+
+.pull-right[
+
+`\(H_1: \theta &gt; 0.5\)`
+
+`\(P(\theta &gt; 0.5 | Y = 14) = 0.996\)`
+
+![](04-intervals-probs-grid_files/figure-html/unnamed-chunk-5-1.svg)&lt;!-- --&gt;
+]
+
+]
+
+---
+class: inverse, middle
+
+# Basics of Bayesian computing
+
+---
+
+# Design, redux (for the last time)
+
+.large[
+**Data:** N N N N &lt;font color = "tomato"&gt;B B&lt;/font&gt; N N N  &lt;font color = "tomato"&gt;B&lt;/font&gt; N N N N N N N (14 Ns; &lt;font color = "tomato"&gt;3 Bs&lt;/font&gt;)
+
+&lt;br&gt;
+
+**Data model:**
+
+Some true proportion of guesses, `\(\theta\)`
+
+Toss a coin with probability of heads, `\(\theta\)`
+
+&lt;br&gt;
+
+**Belief about `\(\theta\)`:**
+
+Researchers believe that `\(\theta = 2/3\)` is most likely
+]
+
+---
+
+## Triangle distribution
+
+.large[
+`$$f(\theta | a, b, c) = 
+  \begin{cases}
+  \frac{2(\theta -a)}{(b-a)(c-a)} &amp; a \le \theta  &lt;c,\\
+  \frac{2(b-\theta )}{(b-a)(b-c)} &amp; c \le \theta  &lt;b,\\
+  0 &amp; \text{otherwise.}
+  \end{cases}$$`
+]
+
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-6-1.svg" width="75%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Posterior derivation
+.large[
+.pull-left[
+`$$\pi(\theta) = 
+  \begin{cases}
+  3\theta&amp; 0 \le \theta  &lt;2/3,\\
+  6(1-\theta) &amp; 2/3 \le \theta  &lt; 1,\\
+  0 &amp; \text{otherwise.}
+  \end{cases}$$`
+  
+`\(f(Y | \theta) = \dbinom{n}{y} \theta^Y (1-\theta)^{n-Y}\)`
+
+`$$p(\theta | Y) \propto
+  \begin{cases}
+  \theta^{Y+1} (1-\theta)^{n-Y} &amp; 0 \le \theta  &lt;2/3,\\
+  \theta^{Y} (1-\theta)^{n-Y+1} &amp; 2/3 \le \theta  &lt; 1,\\
+  0 &amp; \text{otherwise.}
+  \end{cases}$$`
+]
+
+.pull-right[
+
+]
+
+.content-box-blue[
+This is not a "known" distribution...
+]
+
+]
+
+
+---
+
+
+
+## Grid approximate posterior
+
+.Large[
+1. Choose a grid of values of `\(\theta\)` over an interval that covers the posterior density.
+
+2. Compute likelihood `\(\times\)` prior on the grid.
+
+3. Normalize by dividing each product by the sum of the products.
+]
+
+
+---
+
+## Grid approximate posterior
+
+.large[
+
+```
+## # A tibble: 1,001 x 5
+##    theta prior likelihood unstd.posterior posterior
+##    &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;           &lt;dbl&gt;     &lt;dbl&gt;
+##  1 0     0       0.              0.        0.      
+##  2 0.001 0.003   6.78e-40        2.03e-42  3.02e-44
+##  3 0.002 0.006   1.11e-35        6.64e-38  9.87e-40
+##  4 0.003 0.009   3.22e-33        2.90e-35  4.31e-37
+##  5 0.004 0.012   1.80e-31        2.16e-33  3.21e-35
+##  6 0.005 0.015   4.09e-30        6.13e-32  9.11e-34
+##  7 0.006 0.018   5.23e-29        9.42e-31  1.40e-32
+##  8 0.007 0.021   4.52e-28        9.48e-30  1.41e-31
+##  9 0.008 0.024   2.92e-27        7.01e-29  1.04e-30
+## 10 0.009 0.027   1.51e-26        4.09e-28  6.07e-30
+## # … with 991 more rows
+```
+
+.content-box-blue[We've approximated the PDF with a PMF...]
+]
+
+---
+
+## Grid approximate posterior
+
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-8-1.svg" width="90%" style="display: block; margin: auto;" /&gt;
+
+.large[
+.content-box-blue[
+We've approximated the PDF with a PMF... with pretty good results!
+]
+]
+
+---
+
+## What do we want to do with our posterior?
+
+.Large[
+- Calculate point estimates 
+
+    e.g. Calculate the posterior mean or MAP estimate
+  
+
+- Determine an interval with specified probability
+
+    e.g. Find an 97% credible interval for `\(\theta\)`
+
+- Determine probability in a fixed interval
+
+    e.g. Find `\(P(\theta &gt; 0.75)\)`
+  
+]
+
+---
+
+## How can we use the grid-approximate posterior?
+.large[
+.content-box-blue[
+**Monte Carlo Sampling**
+
+Draw a sample of size `\(S\)` from the posterior
+
+`$$\theta^{(1)}, \theta^{(2)}, \ldots, \theta^{(S)} \sim p(\theta | Y)$$`
+
+and use these samples to approximate the posterior
+]
+]
+
+---
+
+## Monte Carlo sampling
+
+
+
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-10-1.svg" width="90%" style="display: block; margin: auto;" /&gt;
+
+
+.large[
+Now, use sample statistics to approximate posterior quantities
+]
+
+---
+
+## Calculating `\(P(\theta &gt; 0.75)\)`
+
+
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-11-1.svg" style="display: block; margin: auto;" /&gt;
+
+.large[
+Estimate probabilities by the proportion of samples, `\(\theta^{(i)}\)`, that fall in the interval.
+
+
+
+```r
+mean(posterior_sample &gt; 0.75)
+```
+
+```
+## [1] 0.55499
+```
+]
+
+---
+
+## Calculating a 97% credible interval
+
+.content-box-blue[
+**Equal-tailed CI (i.e.percentile interval)**&lt;br&gt;
+Trim an equal proportion from each side of the sample
+]
+
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-13-1.svg" style="display: block; margin: auto;" /&gt;
+
+
+
+```r
+# using the quantile function like in Math 275
+quantile(posterior_sample, probs = c(0.015, 0.985))
+```
+
+```
+##  1.5% 98.5% 
+## 0.552 0.921
+```
+
+
+---
+
+## Calculating a 97% HPDI
+
+
+.content-box-blue[
+**HPDI**: use the `HDInterval` package
+]
+
+&lt;img src="04-intervals-probs-grid_files/figure-html/unnamed-chunk-15-1.svg" style="display: block; margin: auto;" /&gt;
+
+
+
+```r
+HDInterval::hdi(posterior_sample, credMass = 0.97)
+```
+
+```
+## lower upper 
+## 0.561 0.925 
+## attr(,"credMass")
+## [1] 0.97
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
