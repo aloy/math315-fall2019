@@ -112,16 +112,16 @@ BSM = *Bayesian Statistical Methods*
 BIDA = *Bayesian Ideas and Data
 Analysis*
 
-| Date   | Reading                                                                                                                        | Topic                                                          | Materials                                                                        |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| 16-Sep | BSM 1.1-1.2; <br> [BIDA 2.1](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=32)         | Welcome and probability review                                 | [Slides](https://aloy.github.io/math315-fall2019/01-probability-review.html#1)   |
-| 18-Sep | BSM 1.3; <br> [BIDA 2.2-2.3](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=37)         | Comparing paradigms, updating prior belief, discrete priors    | [Slides](https://aloy.github.io/math315-fall2019/02-bayesian-updating.html#1)    |
-| 20-Sep | 1.4.1-1.4.2; <br> [BIDA 2.4](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=49)         | Continuous priors, posterior analysis                          | [Slides](https://aloy.github.io/math315-fall2019/03-posterior-analysis.html#1)   |
-|        |                                                                                                                                |                                                                |                                                                                  |
-| 23-Sep | BSM 1.5; <br> [BIDA 3.1](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=56)             | Posterior analysis, Monte Carlo simulation, grid approximation | [Slides](https://aloy.github.io/math315-fall2019/04-intervals-probs-grid.html#1) |
-| 25-Sep | BSM 1.5                                                                                                                        | Bayesian prediction, model checking, conjugate analysis        |                                                                                  |
-| 27-Sep | BSM 2.1.1-2.1.2; <br> [BIDA 2.2-2.3](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=37) | Selecting conjugate priors                                     |                                                                                  |
+| Date   | Reading                                                                                                                        | Topic                                                          | Materials                                                                                            |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 16-Sep | BSM 1.1-1.2; <br> [BIDA 2.1](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=32)         | Welcome and probability review                                 | [Slides](https://aloy.github.io/math315-fall2019/01-probability-review.html#1)                       |
+| 18-Sep | BSM 1.3; <br> [BIDA 2.2-2.3](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=37)         | Comparing paradigms, updating prior belief, discrete priors    | [Slides](https://aloy.github.io/math315-fall2019/02-bayesian-updating.html#1)                        |
+| 20-Sep | 1.4.1-1.4.2; <br> [BIDA 2.4](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=49)         | Continuous priors, posterior analysis                          | [Slides](https://aloy.github.io/math315-fall2019/03-posterior-analysis.html#1)                       |
+|        |                                                                                                                                |                                                                |                                                                                                      |
+| 23-Sep | BSM 1.5; <br> [BIDA 3.1](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=56)             | Posterior analysis, Monte Carlo simulation, grid approximation | [Slides](https://aloy.github.io/math315-fall2019/04-intervals-probs-grid.html#1)                     |
+| 25-Sep | BSM 1.5                                                                                                                        | Bayesian prediction, model checking, conjugate analysis        | [birthorder.csv](https://raw.githubusercontent.com/aloy/math315-fall2019/master/data/birthorder.csv) |
+| 27-Sep | BSM 2.1.1-2.1.2; <br> [BIDA 2.2-2.3](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=37) | Selecting conjugate priors                                     |                                                                                                      |
 
-<!--  | | | -->
-
-<!-- 30-Sep | | Selecting priors  | -->
+<!-- | | | --> <!-- 30-Sep | | Selecting priors  | -->
+<!-- 2-Oct | | Selecting priors  | -->
+<!-- 4-Oct | | Selecting priors  | -->
