@@ -8,6 +8,7 @@ Homework
 
 | Assignment       | Due Date | Solution                   |
 | ---------------- | -------- | -------------------------- |
+| [hw04](hw04.pdf) | 01-Oct   |                            |
 | [hw03](hw03.pdf) | 27-Sep   |                            |
 | [hw02](hw02.pdf) | 24-Sep   |                            |
 | [hw01](hw01.pdf) | 20-Sep   | [soln-hw01](soln-hw01.pdf) |
