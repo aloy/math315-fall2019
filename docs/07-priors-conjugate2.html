@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Specifying conjugate priors</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Specifying conjugate priors
+### Math 315: Bayesian Statistics
+
+---
+
+
+class: middle, clear
+
+
+
+## 1. Poisson-gamma example
+
+## 2. Prior predictive distribution
+
+## 3. Mixture priors
+
+## 4. Natural conjugate priors
+
+---
+
+# Poisson-gamma model for a rate
+
+.large[
+A fundamental task in statistics is to estimate a rate of occurrence:
+
+- Number of virus attacks per day on a computer network
+
+- Number of Ebola cases per day
+
+- Number of diseased trees per square mile in a forest
+]
+
+--
+.large[
+**Target:** estimate of the true rate, `\(\lambda\)`
+
+* Make observations over time period of length *N* OR make observations over region of area *N* 
+
+* Observe `\(Y = 0, 1, 2, \ldots\)` events
+
+* Obtain the posterior, calculate a 95% interval, test a claim about `\(\lambda\)` 
+]
+
+---
+
+# Poisson-gamma model for a rate
+
+.left-column[
+
+## Assumption
+
+## Likelihood
+
+## Prior
+
+## Posterior
+
+]
+
+.right-column[
+
+.large[
+Constant rate of occurrence over unit of time/space&lt;br&gt;&lt;br&gt;
+
+
+`\(Y|\lambda \sim \text{Poisson}(N\lambda)\)` &lt;br&gt; &lt;br&gt;
+
+`\(\lambda &gt; 0\)`, so Gamma(*a*, *b*) is a good choice&lt;br&gt; &lt;br&gt;
+
+`\(\lambda |Y \sim \text{Gamma}(a + Y, b + N)\)`
+]
+
+]
+
+---
+class: inverse
+# Your turn
+
+.Large[
+`$$\widehat{\lambda} = E(\lambda | Y) = \dfrac{a + Y}{b+N} = (1-w) \dfrac{a}{b} + w \dfrac{Y}{n}$$`
+
+1. Find an expression for `\(w\)`.
+
+2. Describe `\(Y/N\)` and `\(a/b\)` in words.
+
+3. If we view Gamma(*a*, *b*) as a data augmentation prior, what do *a* and *b* represent?
+
+4. When (in terms of *N*, *a*, and *b*) is  `\(\widehat{\lambda}\)` close to `\(Y/N\)`? How does this help you set a "weak" prior?
+
+5. When (in terms of *N*, *a*, and *b*) is  `\(\widehat{\lambda}\)` shrunk towards `\(a/b\)`?
+]
+
+---
+class: inverse
+# Your turn
+
+.Large[
+Suppose that causes of death in 2018 are reviewed in detail for a city with a population of 200,000. It is found that 3 people died of asthma, giving a crude estimated asthma mortality rate in the city of 1.5 cases per 100,000 people per year.
+
+You propose the Poisson model `\(Y|\lambda \sim \text{Poisson}(2 \lambda)\)`, where `\(\lambda\)` denotes the true underlying long-term asthma mortality rate in the city, measured in cases per 100,000 people per year.
+
+Reviews of asthma mortality rates around the world suggest that mortality rates about 1.5 per 100,000 people are rare in Western countries, with typical asthma mortality rates around 0.6 per 100,000. 
+
+]
+
+---
+
+# Prior predictive distribution
+
+.content-box-blue[
+Simulate data implied by your prior specification to see if it seems reasonable
+]
+
+
+
+
+
+```r
+# Be sure to set S, a, and b
+prior_lambdas &lt;- rgamma(S, a, b)        # draw lambdas
+prior_ys &lt;- rpois(S, 2 * prior_lambdas) # draw ys
+```
+
+&lt;img src="07-priors-conjugate2_files/figure-html/unnamed-chunk-3-1.svg" width="65%" style="display: block; margin: auto;" /&gt;
+
+
+???
+
+A predictive distribution that integrates over unknown parameters but is not conditional on observed data is called a prior predictive distribution. **Such a distribution can be useful in evaluating if a prior distribution for `\(\theta\)` actually translates into reasonable prior beliefs for observable data.**
+
+---
+
+# Sensitivity analysis
+.large[
+.content-box-blue[
+Any time informative priors are used you should conduct a
+**sensitivity analysis**
+]
+
+- Compare the posterior for several priors
+
+- Describe how the posterior changes
+
+- Example: [https:
+//www.ncbi.nlm.nih.gov/pubmed/19010642](https:
+//www.ncbi.nlm.nih.gov/pubmed/19010642)
+]
+
+---
+
+
+&lt;img src="figs/sensitivity_analysis_ex.jpg" width="70%" style="display: block; margin: auto;" /&gt;
+
+
+
+.footnote[
+.small[
+&lt;br&gt;
+
+Source: [https://www.ncbi.nlm.nih.gov/pubmed/19010642](https:
+//www.ncbi.nlm.nih.gov/pubmed/19010642)
+]
+]
+
+
+---
+
+# Combining prior knowledge
+
+.large[
+
+- Prior information can come from a variety of sources
+
+- Say that source `\(j\)` (e.g., journal article, expert, pilot study)
+suggests prior `\(\pi_j(\theta)\)`
+
+- A mixture of experts prior combines the `\(j\)` sources into a
+single prior distribution
+]
+
+---
+
+# Mixture prior
+
+Suppose we have two experts consulted for the asthma mortality example
+
+.pull-left[
+**Expert 1**:
+
+- `\(E(\lambda) = a/b  = 0.6\)` 
+- `\(\displaystyle\int_0^{1.5} \pi(\lambda | a, b) d\lambda = 0.975\)`
+
+`\(\Rightarrow\lambda \sim \text{Gamma}(a = 2.7, b = 4.5)\)`
+]
+
+.pull-right[
+**Expert 2**
+
+- `\({\rm mode} (\lambda) = (a-1)/b =  0.8\)` 
+- `\(\displaystyle\int_0^{2} \pi(\lambda | a, b) d\lambda = 0.95\)`
+
+`\(\Rightarrow\lambda \sim \text{Gamma}(a = 4.2, b = 4)\)`
+
+]
+
+&lt;img src="07-priors-conjugate2_files/figure-html/unnamed-chunk-5-1.svg" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Computing with a mixture prior
+
+.large[
+Suppose we give expert 1 weight `\(w_1 = 0.6\)` and expert 2 weight `\(w_2 = 0.4\)`
+
+
+```r
+lambda &lt;- seq(0, 10, by = 0.001)
+prior  &lt;- 
+  0.6 * dgamma(lambda, 2.7, 4.5) + 0.4 * dgamma(lambda, 4.2, 4)
+```
+]
+
+&lt;img src="07-priors-conjugate2_files/figure-html/unnamed-chunk-7-1.svg" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Natural conjugate priors
+
+.content-box-yellow[
+.large[
+Is there a natural way of constructing a class of conjugate priors given a specific sampling density, `\(f(y|\theta)\)`?
+
+*Answer:* Yes, for most of the distributions we have seen in stats up to this point &lt;br&gt;(i.e. *the exponential family of distributions*)
+
+]
+
+]
+
+---
+
+# Exponential family of distributions
+
+.content-box-blue[
+A family of PDFs/PMFs is an exponential family if it can be expressed as
+
+`$$f(y | \theta) = h(x) c(\theta) \exp \left( \sum_{i=1}^k w_i(\theta) t_i(x) \right)$$`
+
+Note: `\(k=1\)` for a single-parameter model
+]
+
+--
+
+Notice that
+
+`$$f(y | \theta) \propto c(\theta) \exp \left( \sum_{i=1}^k w_i(\theta) t_i(x) \right)$$`
+
+`\(t_i(x)\)` is said to be a *sufficient statistic* for `\(\theta\)` 
+
+---
+class:inverse, middle, center
+
+#Nonconjugate prior elicitation
+
+---
+
+# Histogram approach
+
+.large[
+
+Sometimes it's easier to get a researcher/expert to choose a set of sub-intervals and assign probabilities or relative likelihoods to those intervals.
+
+1. Bin the parameter space
+
+1. Decide on the amount of probability (or the relative "likelihood") in each bin
+
+1. Normalize if required
+]
+
+
+---
+
+class: clear
+
+
+
+
+```r
+# Create a histogram prior using LearnBayes::histprior()
+library(LearnBayes)
+theta &lt;- seq(0, 1, by = 0.001)
+mid_points &lt;- seq(0.05, 0.95, by = .1)
+prior_likelihood &lt;- c(1, 1, 1, 1, 2, 4, 8, 8, 4, 2)
+prior_prob &lt;- prior_likelihood / sum(prior_likelihood)
+
+# Calc. prior probability for every point on the theta grid 
+prior &lt;- histprior(theta, mid_points, prior_prob)
+```
+
+
+&lt;img src="07-priors-conjugate2_files/figure-html/unnamed-chunk-9-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# Relative likelihood approach
+
+
+
+.large[
+
+Instead of choosing intervals, you can have guide an expert to specify key points of a frequency polygon that you can then "fill in".
+
+
+1. Identify the "most likely" and "least likely" points in the parameter space
+
+1. Determine the relative "likelihood" for several more points
+
+1. Interpolate (usually linearly)
+
+1. Normalize
+]
+
+???
+
+This takes the histogram prior approach a step farther. Instead of choosing intervals, you're essentially trying to construct a key points of a frequency polygon that you can then "fill in".
+
+---
+
+class: clear
+
+
+```r
+# set up your prior beliefs
+key_thetas &lt;- seq(0, 1, by = 0.1)
+prior_likelihood &lt;- c(1, 1, 1, 1, 1, 2, 4, 8, 8, 4, 2)
+prior_prob &lt;- prior_likelihood / sum(prior_likelihood)
+
+# interpolate to get the prior via approxfun()
+rel_likelihood &lt;- approxfun(x = key_thetas, y = prior_prob, method = "linear")
+
+# add the prior probs on the grid
+theta &lt;- seq(0, 1, by = 0.001)
+prior &lt;- rel_likelihood(theta)
+```
+
+
+&lt;img src="07-priors-conjugate2_files/figure-html/unnamed-chunk-11-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
