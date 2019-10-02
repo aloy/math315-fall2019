@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Specifying noninformative/objective priors</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Specifying noninformative/objective priors
+### Math 315: Bayesian Statistics
+
+---
+
+
+class: middle, clear
+
+
+
+## 1. Wrap up specifying informative priors
+
+## 2. Specifying noninformative/objective priors
+
+---
+
+# Natural conjugate priors
+
+.content-box-yellow[
+.large[
+Is there a natural way of constructing a class of conjugate priors given a specific sampling density, `\(f(y|\theta)\)`?
+
+*Answer:* Yes, for most of the distributions we have seen in stats up to this point &lt;br&gt;(i.e. *the exponential family of distributions*)
+
+]
+
+]
+
+---
+
+# Exponential family of distributions
+
+.content-box-blue[
+A family of PDFs/PMFs is an exponential family if it can be expressed as
+
+`$$f(y | \theta) = h(x) c(\theta) \exp \left( \sum_{i=1}^k w_i(\theta) t_i(x) \right)$$`
+
+Note: `\(k=1\)` for a single-parameter model
+]
+
+--
+
+Notice that
+
+`$$f(y | \theta) \propto c(\theta) \exp \left( \sum_{i=1}^k w_i(\theta) t_i(x) \right)$$`
+
+`\(t_i(x)\)` is said to be a *sufficient statistic* for `\(\theta\)` 
+
+---
+class: middle, center
+
+#Nonconjugate prior elicitation
+
+---
+
+# Histogram approach
+
+.large[
+
+Sometimes it's easier to get a researcher/expert to choose a set of sub-intervals and assign probabilities or relative likelihoods to those intervals.
+
+1. Bin the parameter space
+
+1. Decide on the amount of probability (or the relative "likelihood") in each bin
+
+1. Normalize if required
+]
+
+
+---
+
+class: clear
+
+
+
+
+```r
+# Create a histogram prior using LearnBayes::histprior()
+library(LearnBayes)
+theta &lt;- seq(0, 1, by = 0.001)
+mid_points &lt;- seq(0.05, 0.95, by = .1)
+prior_likelihood &lt;- c(1, 1, 1, 1, 2, 4, 8, 8, 4, 2)
+prior_prob &lt;- prior_likelihood / sum(prior_likelihood)
+
+# Calc. prior probability for every point on the theta grid 
+prior &lt;- histprior(theta, mid_points, prior_prob)
+```
+
+
+&lt;img src="08-priors-noninfomative_files/figure-html/unnamed-chunk-2-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# Relative likelihood approach
+
+
+
+.large[
+
+Instead of choosing intervals, you can have guide an expert to specify key points of a frequency polygon that you can then "fill in".
+
+
+1. Identify the "most likely" and "least likely" points in the parameter space
+
+1. Determine the relative "likelihood" for several more points
+
+1. Interpolate (usually linearly)
+
+1. Normalize
+]
+
+???
+
+This takes the histogram prior approach a step farther. Instead of choosing intervals, you're essentially trying to construct a key points of a frequency polygon that you can then "fill in".
+
+---
+
+class: clear
+
+
+```r
+# set up your prior beliefs
+key_thetas &lt;- seq(0, 1, by = 0.1)
+prior_likelihood &lt;- c(1, 1, 1, 1, 1, 2, 4, 8, 8, 4, 2)
+prior_prob &lt;- prior_likelihood / sum(prior_likelihood)
+
+# interpolate to get the prior via approxfun()
+rel_likelihood &lt;- approxfun(x = key_thetas, y = prior_prob, 
+                            method = "linear")
+
+# calculate the prior probs on the grid
+theta &lt;- seq(0, 1, by = 0.001)
+prior &lt;- rel_likelihood(theta)
+```
+
+
+&lt;img src="08-priors-noninfomative_files/figure-html/unnamed-chunk-4-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+class: inverse, middle, center
+
+# Noninformative/objective priors
+
+
+```
+## Warning: `data_frame()` is deprecated, use `tibble()`.
+## This warning is displayed once per session.
+```
+
+---
+
+# Flat/diffuse priors
+
+.large[
+&gt; [A] prior which is dominated by the likelihood is one which does not change very much over the region in which the likelihood is appreciable and does not assume large values outside that range." 
+&gt;
+&gt; For such a prior distribution we can approximate the result of Bayes’ formula (theorem) by substituting a constant for the prior distribution.
+&gt;
+&gt; -Box and Tiao (1973)
+]
+
+.footnote[
+Box, G. E., &amp; Tiao, G. C. (1973). *Bayesian inference in statistical analysis*.
+]
+
+
+???
+
+Box and Tiao use the analogy of a properly run jury trial, wherein the weight of evidence presented in court dominates the prior ideas/biases that may be held by members of the jury.
+
+
+---
+
+# Objective Bayes
+
+.large[
+- An objective Bayesian attempts to replace the subjective
+choice of prior with an algorithm that determines the prior
+
+- There are many approaches: 
+  .pull-left[
++ .bolder[Jeffreys]
++ reference
++ probability matching
++ maximum entropy
+  ]
+  
+.pull-right[
++ empirical Bayes
++ penalized complexity
++ ...and more...
+]
+
+&lt;br&gt;
+
+- Many of these priors are improper and so you have to
+check that the posterior is proper
+]
+
+---
+
+# Jeffreys' prior
+.large[
+- A transfromation invariant prior distribution for `\(\theta\)` is proportional to the square root of the Fisher information 
+
+
+`\begin{align*}
+\pi(\theta) &amp;\propto I(\theta)^{1/2}\\
+I(\theta) &amp;= -E \left[ \frac{\partial^2 \log(f(y | \theta))}{\partial\theta} \right]
+\end{align*}`
+
+&lt;br&gt;
+
+- Puts more weight in regions of parameter space where the
+data are expected to be more informative
+
+&lt;br&gt;
+
+- Review the change of variables formula from calculus!
+ ]
+ 
+---
+
+.Large[
+Jeffreys' prior for `\(Y|\theta \sim \text{Binomial}(n, \theta)\)`
+]
+
+&lt;img src="08-priors-noninfomative_files/figure-html/unnamed-chunk-6-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+???
+
+Note that in this case the prior is inversely proportional to the standard deviation. Why does this make sense?
+
+We see that the data has the least effect on the posterior when the true `\(\theta = 1/2\)` , and has the greatest effect near the extremes, `\(\theta = 0 \text{ or } 1\)`. 
+
+The Jeffreys prior compensates for this by placing more mass near the extremes of the range, where the data has the strongest effect. We could get the same effect by (for example) setting `\(p(\theta) \propto 1 / Var(\theta)\)` instead of `\(p(\theta) \propto 1 / Var(theta)^{1/2}\)` . However, the former prior is not invariant under reparameterization, as we would prefer.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
