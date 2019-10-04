@@ -114,6 +114,6 @@ Date | Reading | Topic | Materials
 2-Oct | BSM 2.2-2.3.1; <br> [BIDA 4.6](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=88) | Natural conjugate priors, nonconjugate priors, uninformative priors  | [Slides](https://aloy.github.io/math315-fall2019/08-priors-noninformative.html#1)
 4-Oct | BSM 1.4.3; <br> [BIDA 4.7](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=91), [5.2-5.2.3](https://ebookcentral.proquest.com/lib/carleton-ebooks/reader.action?docID=1648259&ppg=130) | Jeffreys' prior, intro to multiparameter models  | [Slides](09-intro-multiparameter.html#1)
  | | |
-30-Sep | BSM 3.1 | Multiparameter models, deterministic Bayesian computing  |
+30-Sep | BSM 3.1 | Multiparameter models  |
 2-Oct |  |   |
 4-Oct |  |   | 
