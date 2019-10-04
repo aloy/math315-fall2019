@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Specifying noninformative/objective priors</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Specifying noninformative/objective priors
+### Math 315: Bayesian Statistics
+
+---
+
+
+class: middle, clear
+
+
+
+## 1. Jeffreys' prior
+
+## 2. Introduction to multiparameter models
+
+---
+
+# Jeffreys' prior
+.large[
+- A transformation invariant prior distribution for `\(\theta\)` is proportional to the square root of the Fisher information 
+
+
+`\begin{align*}
+\pi(\theta) &amp;\propto I(\theta)^{1/2}\\
+I(\theta) &amp;= -E \left[ \frac{\partial^2 \log(f(y | \theta))}{\partial\theta} \right]
+\end{align*}`
+
+&lt;br&gt;
+
+- Puts more weight in regions of parameter space where the
+data are expected to be more informative
+
+&lt;br&gt;
+
+- Review the change of variables formula from calculus!
+ ]
+ 
+
+ 
+---
+
+.Large[
+Jeffreys' prior for `\(Y|\theta \sim \text{Binomial}(n, \theta)\)`
+]
+
+&lt;img src="09-intro-multiparameter_files/figure-html/unnamed-chunk-2-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+???
+
+Note that in this case the prior is inversely proportional to the standard deviation. Why does this make sense?
+
+We see that the data has the least effect on the posterior when the true `\(\theta = 1/2\)` , and has the greatest effect near the extremes, `\(\theta = 0 \text{ or } 1\)`. 
+
+The Jeffreys prior compensates for this by placing more mass near the extremes of the range, where the data has the strongest effect. We could get the same effect by (for example) setting `\(p(\theta) \propto 1 / Var(\theta)\)` instead of `\(p(\theta) \propto 1 / Var(theta)^{1/2}\)` . However, the former prior is not invariant under reparameterization, as we would prefer.
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+Let `\(Y|\mu \sim \mathcal{N}(\mu, \sigma^2)\)` where `\(\sigma^2\)` is known.
+
+Derive the Jeffreys' prior for `\(\mu\)`.
+]
+
+---
+class:inverse, center, middle
+
+# Multiparameter models
+
+---
+
+.left-column[
+## Example
+]
+
+.right-column[
+.large[
+
+
+- Partial census data for the Dobe area !Kung San, a foraging population
+
+- Compiled from Nancy Howell's interviews
+]
+
+
+
+&lt;img src="figs/howell-cover.jpg" width="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+.left-column[
+## Example
+]
+
+.right-column[
+
+.large[
+- Interest is in analyzing the average height of an adult
+]
+
+&lt;img src="09-intro-multiparameter_files/figure-html/unnamed-chunk-5-1.svg" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+class: middle, inverse
+
+# Noninformative analysis
+
+---
+
+# Sampling from the joint posterior
+
+.large[
+**Target:** `\(p(\mu |y_1, \ldots, y_m)\)`
+
+**1.** Sample `\(\sigma^2\)` from `\(\sigma^2 | y_1, \ldots, y_m \sim \text{InverseGamma}\left( \frac{n-1}{2},\ \frac{(n-1)s^2}{2} \right)\)`
+
+
+```r
+n &lt;- nrow(adults)
+s2 &lt;- var(adults$height)
+sigma2s &lt;- 1 / rgamma(1e4, (n-1)/2, (n-2) * s2 / 2) 
+```
+
+**2.** Sample `\(\mu\)` from `\(\mu | \sigma^2, y_1, \ldots, y_m \sim \mathcal{N}\left( \bar{y},\ \frac{\sigma^2}{n} \right)\)`
+
+
+```r
+ybar &lt;- mean(adults$height)
+mus &lt;- rnorm(1e4, ybar, sqrt(sigma2s))
+```
+]
+
+
+---
+class: clear
+
+
+```r
+post_samples &lt;- data.frame(mu = mus, sigma2 = sigma2s)
+ggplot(data = post_samples) +
+  geom_point(mapping = aes(x = mu, y = sigma2), alpha = 0.1) +
+  theme_minimal() +
+  labs(x = expression(mu), y = expression(sigma^2))
+```
+
+&lt;img src="09-intro-multiparameter_files/figure-html/unnamed-chunk-8-1.svg" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+class: clear
+
+
+```r
+ggplot(data = post_samples) +
+  geom_point(mapping = aes(x = mu, y = sigma2), alpha = 0.1) +
+  geom_density_2d(mapping = aes(x = mu, y = sigma2), color = "orange", size = 0.8) +
+  theme_minimal() +
+  labs(x = expression(mu), y = expression(sigma^2))
+```
+
+&lt;img src="09-intro-multiparameter_files/figure-html/unnamed-chunk-9-1.svg" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+class: clear
+
+
+```r
+ggplot(data = post_samples) +
+  geom_density_2d(mapping = aes(x = mu, y = sigma2), color = "orange") +
+  theme_minimal() +
+  labs(x = expression(mu), y = expression(sigma^2))
+```
+
+&lt;img src="09-intro-multiparameter_files/figure-html/unnamed-chunk-10-1.svg" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+class: clear
+
+&lt;img src="09-intro-multiparameter_files/figure-html/unnamed-chunk-11-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Marginal posteriors
+
+.pull-left[
+
+`\(\boldsymbol \mu\)`
+
+![](09-intro-multiparameter_files/figure-html/unnamed-chunk-12-1.svg)&lt;!-- --&gt;
+
+
+```r
+quantile(mus, probs = c(0.05, 0.9))
+```
+
+```
+##       5%      90% 
+## 142.0017 164.5319
+```
+
+]
+
+.pull-right[
+
+`\(\boldsymbol \sigma\)`
+
+![](09-intro-multiparameter_files/figure-html/unnamed-chunk-14-1.svg)&lt;!-- --&gt;
+
+
+```r
+quantile(sigma2s, probs = c(0.05, 0.9))
+```
+
+```
+##      5%     90% 
+## 53.0038 66.2231
+```
+
+
+```r
+quantile(sqrt(sigma2s), probs = c(0.05, 0.9))
+```
+
+```
+##       5%      90% 
+## 7.280371 8.137758
+```
+]
+
+---
+class: middle, inverse
+
+# Informative analysis
+
+---
+
+# McElreath's analysis
+
+.pull-left[
+
+### Model
+
+`\(y_i \sim \mathcal{N}(\mu, \sigma)\)`
+
+`\(\mu \sim \mathcal{N}(178,\ 20)\)`
+
+`\(\sigma \sim \text{Unif}(0, 50)\)`
+
+]
+
+.pull-right[
+
+![](09-intro-multiparameter_files/figure-html/unnamed-chunk-17-1.svg)&lt;!-- --&gt;
+
+.code70[
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     8.2   157.2   178.2   178.5   199.4   358.4
+```
+]
+
+]
+
+---
+
+# Joint posterior via grid approximation
+
+
+```r
+# Create grid over the coordinate plane
+param_grid &lt;- expand.grid(
+  mu = seq(from = 118, to = 238, length.out = 1000), 
+  sigma = seq(from = 0, to = 50, length.out = 1000)
+)
+
+# Calculate joint log prior for each point on grid
+logprior &lt;- dnorm(param_grid[i, "mu"], 178, 20, log = TRUE) +
+      dunif(param_grid[i, "sigma"], 0, 50, log = TRUE)
+
+# Calculate log likelihood for each point on grid
+ll &lt;- numeric(length = nrow(param_grid))
+for(i in 1:nrow(param_grid)) {
+  ll[i] &lt;- sum(dnorm(Howell1$height, mean = param_grid[i, "mu"], 
+                     sd = param_grid[i, "sigma"], log = TRUE))
+}
+
+# Calculate log posterior, then exponentiate
+logposterior &lt;- logprior + ll
+unstd_posterior &lt;- exp(logposterior - max(logposterior)) # numeric stability
+posterior &lt;- unstd_posterior / sum(unstd_posterior)
+```
+
+---
+
+# Joint posterior via grid approximation
+
+
+```r
+posterior_draws &lt;- dplyr::sample_n(
+  param_grid, size = 1e4, replace = TRUE, weight = posterior
+)
+```
+
+&lt;img src="09-intro-multiparameter_files/figure-html/unnamed-chunk-21-1.svg" width="55%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Marginal posteriors via grid approximation
+
+.pull-left[
+
+### `\(\mu\)`
+
+![](09-intro-multiparameter_files/figure-html/unnamed-chunk-22-1.svg)&lt;!-- --&gt;
+
+
+```r
+quantile(posterior_draws$mu, probs = c(0.05, 0.95))
+```
+
+```
+##       5%      95% 
+## 136.2583 140.2222
+```
+
+]
+
+.pull-right[
+
+### `\(\sigma\)`
+
+![](09-intro-multiparameter_files/figure-html/unnamed-chunk-24-1.svg)&lt;!-- --&gt;
+
+
+```r
+quantile(posterior_draws$sigma, probs = c(0.05, 0.95))
+```
+
+```
+##       5%      95% 
+## 26.32633 29.07908
+```
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+]
+
+
+---
+
+# Vectorization in R
+
+The grid approximation on a 1000 `\(\times\)` 1000 grid took about 33 seconds
+
+Vectorizing the log-likelihood calculation improves speed to 14 seconds
+
+
+```r
+# vectorized log likelihood function
+llnorm &lt;- function(x, mu, sigma) { 
+  sum(dnorm(x, mean = mu, sd = sigma, log = TRUE))
+}
+
+# use all of the x vector for each mu-sigma combo
+llnorm &lt;- Vectorize(llnorm, vectorize.args = c("mu", "sigma"))
+
+# Calculate log likelihood for each point on grid
+ll &lt;- llnorm(x = Howell1$height, mu = param_grid$mu, sigma = param_grid$sigma)
+
+# Everything else is the same...
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
