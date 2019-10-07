@@ -1,0 +1,328 @@
+---
+title: "Multiparameter models"
+author: "Math 315: Bayesian Statistics"
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: middle, clear
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(gridExtra)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(rethinking)
+Howell1 <- readr::read_delim("https://raw.githubusercontent.com/rmcelreath/rethinking/master/data/Howell1.csv", delim = ";")
+adults <- Howell1 %>% filter(age >= 18)
+```
+
+## 1. Introduction to multiparameter models
+
+---
+
+.left-column[
+## Example
+]
+
+.right-column[
+
+.large[
+- Interest is in analyzing the average height of an adult for the Dobe area !Kung San, a foraging population
+]
+
+```{r echo=FALSE, message=FALSE, fig.height = 3.5, fig.width = 5, fig.align='center'}
+ggplot(adults) +
+  geom_histogram(aes(x = height), bins = 20) +
+  theme_light()
+```
+
+]
+
+---
+class: middle, inverse
+
+# Noninformative analysis
+
+---
+
+# Sampling from the joint posterior
+
+.large[
+**Target:** $p(\mu |y_1, \ldots, y_m)$
+
+**1.** Sample $\sigma^2$ from $\sigma^2 | y_1, \ldots, y_m \sim \text{InverseGamma}\left( \frac{n-1}{2},\ \frac{(n-1)s^2}{2} \right)$
+
+```{r cache=TRUE}
+n <- nrow(adults)
+s2 <- var(adults$height)
+sigma2s <- 1 / rgamma(1e4, (n-1)/2, (n-1) * s2 / 2) 
+```
+
+**2.** Sample $\mu$ from $\mu | \sigma^2, y_1, \ldots, y_m \sim \mathcal{N}\left( \bar{y},\ \frac{\sigma^2}{n} \right)$
+
+```{r cache=TRUE}
+ybar <- mean(adults$height)
+mus <- rnorm(1e4, ybar, sqrt(sigma2s / n))
+```
+]
+
+
+---
+class: clear
+
+```{r fig.height=4, fig.width=4, cache=TRUE, fig.align='center', out.width="60%"}
+post_samples <- data.frame(mu = mus, sigma2 = sigma2s)
+ggplot(data = post_samples) +
+  geom_point(mapping = aes(x = mu, y = sigma2), alpha = 0.1) +
+  theme_minimal() +
+  labs(x = expression(mu), y = expression(sigma^2))
+```
+
+---
+class: clear
+
+```{r fig.height=4, fig.width=4, cache=TRUE, fig.align='center', out.width="60%"}
+ggplot(data = post_samples) +
+  geom_point(mapping = aes(x = mu, y = sigma2), alpha = 0.1) +
+  geom_density_2d(mapping = aes(x = mu, y = sigma2), color = "orange", size = 0.8) +
+  theme_minimal() +
+  labs(x = expression(mu), y = expression(sigma^2))
+```
+
+---
+class: clear
+
+```{r fig.height=4, fig.width=4, cache=TRUE, fig.align='center', out.width="60%"}
+ggplot(data = post_samples) +
+  geom_density_2d(mapping = aes(x = mu, y = sigma2), color = "orange") +
+  theme_minimal() +
+  labs(x = expression(mu), y = expression(sigma^2))
+```
+
+---
+class: clear
+
+```{r echo=FALSE, fig.height=5.5, fig.width=5.5, cache=TRUE, fig.align='center', out.width = "80%"}
+p <- ggplot(data = post_samples) +
+  geom_point(mapping = aes(x = mu, y = sigma2), alpha = 0.1) +
+  geom_density_2d(mapping = aes(x = mu, y = sigma2), color = "orange", size = 0.8) +
+  theme_minimal() +
+  labs(x = expression(mu), y = expression(sigma^2))
+
+ggExtra::ggMarginal(
+  p,
+  type = 'density',
+  margins = 'both',
+  size = 5,
+  fill = 'darkorange',
+  alpha = 0.6
+)
+```
+
+---
+
+## Marginal posteriors
+
+.pull-left[
+
+$\boldsymbol \mu$
+
+```{r echo=FALSE, fig.height=2, fig.width=4}
+ggplot(data = post_samples) +
+  geom_density(mapping = aes(x = mu), color = NA, fill = "darkorange", alpha = 0.5) +
+  theme_minimal() +
+  labs(x = expression(mu))
+```
+
+```{r}
+quantile(mus, probs = c(0.05, 0.9))
+```
+
+]
+
+.pull-right[
+
+$\boldsymbol \sigma$
+
+```{r echo=FALSE, fig.height=2, fig.width=4}
+ggplot(data = post_samples) +
+  geom_density(mapping = aes(x = sigma2), color = NA, fill = "darkorange", alpha = 0.5) +
+  theme_minimal() +
+  labs(x = expression(sigma^2))
+```
+
+```{r}
+quantile(sigma2s, probs = c(0.05, 0.9))
+```
+
+```{r}
+quantile(sqrt(sigma2s), probs = c(0.05, 0.9))
+```
+]
+
+---
+class: middle, inverse
+
+# Informative analysis
+
+---
+
+# McElreath's analysis
+
+.pull-left[
+
+### Model
+
+$y_i \sim \mathcal{N}(\mu, \sigma)$
+
+$\mu \sim \mathcal{N}(178,\ 20)$
+
+$\sigma \sim \text{Unif}(0, 50)$
+
+]
+
+.pull-right[
+
+```{r echo=FALSE, fig.height=2, fig.width=4, message=FALSE, warning=FALSE}
+prior.pred <- tibble(
+  mu =  rnorm( 1e4 , 178 , 20 ),
+  sigma = runif( 1e4 , 0 , 50 ),
+  height = rnorm( 1e4 , mu , sigma )
+)
+
+ggplot(data = prior.pred) +
+  geom_histogram(mapping = aes(x = height), fill = "steelblue", bins = 50, alpha = 0.7) +
+  labs(x = "Height (in cm)",
+       title = "Prior predictive distribution") +
+  theme_minimal()
+```
+
+.code70[
+```{r echo=FALSE}
+round(summary(prior.pred$height), 1)
+```
+]
+
+]
+
+---
+
+# Joint posterior via grid approximation
+
+```{r cache=TRUE}
+# Create grid over the coordinate plane
+param_grid <- expand.grid(
+  mu = seq(from = 118, to = 238, length.out = 1000), 
+  sigma = seq(from = 0, to = 50, length.out = 1000)
+)
+
+# Calculate joint log prior for each point on grid
+logprior <- dnorm(param_grid[, "mu"], 178, 20, log = TRUE) +
+      dunif(param_grid[, "sigma"], 0, 50, log = TRUE)
+
+# Calculate log likelihood for each point on grid
+ll <- numeric(length = nrow(param_grid))
+for(i in 1:nrow(param_grid)) {
+  ll[i] <- sum(dnorm(adults$height, mean = param_grid[i, "mu"], 
+                     sd = param_grid[i, "sigma"], log = TRUE))
+}
+
+# Calculate log posterior, then exponentiate
+logposterior <- logprior + ll
+unstd_posterior <- exp(logposterior - max(logposterior)) # numeric stability
+posterior <- unstd_posterior / sum(unstd_posterior)
+```
+
+---
+
+# Joint posterior via grid approximation
+
+```{r}
+posterior_draws <- dplyr::sample_n(
+  param_grid, size = 1e4, replace = TRUE, weight = posterior
+)
+```
+
+```{r echo=FALSE, fig.height=5, fig.width=5, cache=TRUE, fig.align='center', out.width = "55%"}
+ggplot(data = posterior_draws, aes(x = mu, y = sigma)) +
+  geom_point(alpha = 0.2) +
+  geom_density2d(color = "orange", size = 0.8) +
+  theme_minimal() +
+  labs(x = expression(mu),
+       y = expression(sigma))
+```
+
+---
+
+# Marginal posteriors via grid approximation
+
+.pull-left[
+
+### $\mu$
+
+```{r echo=FALSE, fig.height=2, fig.width=4}
+ggplot(data = posterior_draws) +
+  geom_density(mapping = aes(x = mu), color = NA, fill = "darkorange", alpha = 0.5) +
+  theme_minimal() +
+  labs(x = expression(mu))
+```
+
+```{r}
+quantile(posterior_draws$mu, probs = c(0.05, 0.95))
+```
+
+]
+
+.pull-right[
+
+### $\sigma$
+
+```{r echo=FALSE, fig.height=2, fig.width=4}
+ggplot(data = posterior_draws) +
+  geom_density(mapping = aes(x = sigma), color = NA, fill = "darkorange", alpha = 0.5) +
+  theme_minimal() +
+  labs(x = expression(sigma^2))
+```
+
+```{r}
+quantile(posterior_draws$sigma, probs = c(0.05, 0.95))
+```
+
+<br>
+
+<br>
+
+]
+
+
+---
+
+# Vectorization in R
+
+The grid approximation on a 1000 $\times$ 1000 grid took about 30 seconds
+
+Vectorizing the log-likelihood calculation improves speed to 14 seconds
+
+```{r cache=TRUE}
+# vectorized log likelihood function
+llnorm <- function(x, mu, sigma) { 
+  sum(dnorm(x, mean = mu, sd = sigma, log = TRUE))
+}
+
+# use all of the x vector for each mu-sigma combo
+llnorm <- Vectorize(llnorm, vectorize.args = c("mu", "sigma"))
+
+# Calculate log likelihood for each point on grid
+ll <- llnorm(x = adults$height, mu = param_grid$mu, sigma = param_grid$sigma)
+
+# Everything else is the same...
+```

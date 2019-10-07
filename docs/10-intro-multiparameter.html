@@ -58,7 +58,7 @@ class: middle, inverse
 ```r
 n &lt;- nrow(adults)
 s2 &lt;- var(adults$height)
-sigma2s &lt;- 1 / rgamma(1e4, (n-1)/2, (n-2) * s2 / 2) 
+sigma2s &lt;- 1 / rgamma(1e4, (n-1)/2, (n-1) * s2 / 2) 
 ```
 
 **2.** Sample `\(\mu\)` from `\(\mu | \sigma^2, y_1, \ldots, y_m \sim \mathcal{N}\left( \bar{y},\ \frac{\sigma^2}{n} \right)\)`
@@ -66,7 +66,7 @@ sigma2s &lt;- 1 / rgamma(1e4, (n-1)/2, (n-2) * s2 / 2)
 
 ```r
 ybar &lt;- mean(adults$height)
-mus &lt;- rnorm(1e4, ybar, sqrt(sigma2s))
+mus &lt;- rnorm(1e4, ybar, sqrt(sigma2s / n))
 ```
 ]
 
@@ -134,7 +134,7 @@ quantile(mus, probs = c(0.05, 0.9))
 
 ```
 ##       5%      90% 
-## 141.6723 164.4624
+## 153.9200 155.1236
 ```
 
 ]
@@ -152,7 +152,7 @@ quantile(sigma2s, probs = c(0.05, 0.9))
 
 ```
 ##       5%      90% 
-## 53.07747 66.23348
+## 53.09276 66.33424
 ```
 
 
@@ -162,7 +162,7 @@ quantile(sqrt(sigma2s), probs = c(0.05, 0.9))
 
 ```
 ##       5%      90% 
-## 7.285429 8.138395
+## 7.286478 8.144584
 ```
 ]
 
