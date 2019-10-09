@@ -8,8 +8,9 @@ output: github_document
 - Unexcused late homework will not be accepted
 
 Assignment |Due Date | Solution
------|---------|---------
-[hw06](hw06.pdf) | 04-Oct |
+-----|---------|--------
+[hw07](hw07.pdf) | 11-Oct |
+[hw06](hw06.pdf) | 08-Oct |
 [hw05](hw05.pdf) | 04-Oct |
 [hw04](hw04.pdf) | 01-Oct |  [soln-hw04](soln-hw03.pdf)
 [hw03](hw03.pdf) | 27-Sep |  [soln-hw03](soln-hw03.pdf)
