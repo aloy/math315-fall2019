@@ -10,8 +10,8 @@ Homework
 | ---------------- | -------- | -------------------------- |
 | [hw07](hw07.pdf) | 11-Oct   |                            |
 | [hw06](hw06.pdf) | 08-Oct   |                            |
-| [hw05](hw05.pdf) | 04-Oct   |                            |
-| [hw04](hw04.pdf) | 01-Oct   | [soln-hw04](soln-hw03.pdf) |
+| [hw05](hw05.pdf) | 04-Oct   | [soln-hw05](soln-hw05.pdf) |
+| [hw04](hw04.pdf) | 01-Oct   | [soln-hw04](soln-hw04.pdf) |
 | [hw03](hw03.pdf) | 27-Sep   | [soln-hw03](soln-hw03.pdf) |
 | [hw02](hw02.pdf) | 24-Sep   | [soln-hw02](soln-hw02.pdf) |
 | [hw01](hw01.pdf) | 20-Sep   | [soln-hw01](soln-hw01.pdf) |
