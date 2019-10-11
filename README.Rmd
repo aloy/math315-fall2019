@@ -70,6 +70,10 @@ Links to any slides and handouts are in the calendar section below.
 Check the folders above for the .Rmd files containing the R code used 
 to generate slides, etc.
 
+## Exam review
+
+Check the exams folder for a study guide (list of topics) and practice problems.
+
 * * * 
 
 # Calendar
