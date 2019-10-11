@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Deterministic computational approaches</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Deterministic computational approaches
+### Math 315: Bayesian Statistics
+
+---
+
+
+class: middle, clear
+
+
+
+## 1. MAP estimation
+
+## 2. Numerical integration
+
+## 3. Bayesian CLT 
+
+---
+
+# One-parameter example
+
+.large[
+.content-box-blue[
+Does storage in a high-quality freezer improve the taste of hamburgers to justify the extra effort/cost associated with purchasing new equipment?
+]
+]
+
+.large[
+- Suppose 16 consumers have been recruited by a fast food chain to compare two types of ground beef patty on the basis of flavor
+
+- All patties kept frozen for 8 months
+    + One set (16 patties) in a high-quality freezer, maintains `\(0\pm 1^\circ\)` F
+    + Other set in a freezer where temperature varies between 0 and 15 `\(^\circ\)`F 
+]
+
+---
+
+# One-parameter example
+
+.large[
+
+- In test kitchen, patties thawed and prepared by single chef
+
+- Each consumer served the patties in a random order
+
+- Neither consumers nor servers know which patty is which (double blind)
+
+- `\(Y =\)` 13 out of 16 consumers preferred the more-expensive patty
+
+]
+
+---
+
+
+.left-column[
+
+.large[
+&lt;br&gt;
+.bold[Notation]
+
+&lt;br&gt; 
+
+&lt;br&gt;
+
+.bold[Assumption]
+
+&lt;br&gt;
+
+.bold[Likelihood]
+
+&lt;br&gt;
+
+.bold[Prior]
+
+&lt;br&gt;
+
+.bold[Posterior]
+]
+]
+
+.right-column[
+
+.large[
+
+`\(Y_i =\)` #  prefer the more-expensive patty
+
+`\(\theta =\)` prob. selects more-expensive patty 
+
+&lt;br&gt;
+
+Consumers independent; `\(\theta\)` is constant 
+
+&lt;br&gt; 
+
+`\(Y|\theta \sim \text{Binomial}(n, \theta)\)` 
+
+&lt;br&gt;
+
+`\(\theta \sim \text{Beta}(a, b) \qquad \qquad \qquad\)` (conjugate prior) 
+
+&lt;br&gt;
+
+`\(\theta | Y \sim \text{Beta}(a + Y, b + N)\)`
+]
+
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+Let's pretend we didn't know that the posterior followed a beta distribution...
+
+Discuss with your neighbor how you might summarize the posterior distribution in this example
+]
+
+---
+
+# Point estimation
+
+.large[
+.content-box-blue[
+.bold[MAP estimate]
+
+the value of `\(\theta\)` that maximizes the posterior distribution
+]
+
+
+
+]
+
+---
+
+# Point estimation
+
+.left-column[
+.large[
+&lt;br&gt;
+.bolder[When?]
+
+&lt;br&gt;
+&lt;br&gt;
+
+.bolder[Benefit?]
+
+&lt;br&gt;
+
+&lt;br&gt;
+&lt;br&gt;
+
+
+.bolder[Drawback?]
+]
+]
+.large[
+.right-column[
+Sometimes you don’t need an entire posterior distribution
+and a single point estimate will do
+
+- Example:  prediction in machine learning
+
+Very fast computation
+
+- Closed-form solution via calculus
+
+- Fast optimization algorithms&lt;br&gt; (e.g. Newton's method)
+
+*No uncertainty expressed!*
+
+]
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+
+Write down an integral of `\(p(\theta | Y)\)` that you could solve to find the following posterior summaries:
+
+1. Posterior mean
+
+2. Posterior variance
+
+3. Posterior probability that `\(\theta \in [\ell, u]\)`
+
+]
+
+
+---
+
+# Numeric integration
+
+
+.left-column[
+.large[
+&lt;br&gt;
+.bolder[When?]
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+.bolder[Benefit?]
+
+&lt;br&gt;
+
+
+
+.bolder[Drawback?]
+]
+]
+.large[
+.right-column[
+Many posterior summaries of interest are integrals over the
+posterior
+
+These are *p*-dimensional integrals that we usually can’t
+solve analytically
+
+- Example: posterior mean, SD, probability
+
+"Easy" computation
+
+- `adaptIntegrate()` in R
+
+Choice of quadrature methods depends on location and shape of the posterior
+
+Only feasible for small number of parameters
+
+]
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+
+Discuss with your neighbor:
+
+What does the Central Limit Theorem (CLT) tell us?
+
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+
+Discuss with your neighbor:
+
+Think back to Math 275, do you remember the asymptotic distribution of the MLE?
+
+]
+
+
+---
+
+# Bayesian CLT
+
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-1-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Bayesian CLT
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-2-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Bayesian CLT
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-3-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Bayesian CLT
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-4-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Bayesian CLT
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-5-1.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Bayesian CLT
+
+
+.left-column[
+.large[
+&lt;br&gt;
+.bolder[When?]
+
+&lt;br&gt;
+
+
+.bolder[Benefit?]
+&lt;br&gt;&lt;br&gt;
+
+&lt;br&gt;
+
+.bolder[Drawback?]
+]
+]
+.large[
+.right-column[
+For large data sets with a small number of parameters
+evoking the Bayes CLT is probably the best approach
+
+
+The approximate posterior can be computing using
+standard software
+
+Can handle larger number of parameters
+
+Posterior must be unimodal
+
+Accuracy issues — only works for large data sets
+
+Posterior can have positive density outside of the parameter space
+
+Sensitive to starting value
+
+
+
+]
+]
+
+---
+
+# Two-parameter example
+
+.large[
+How can we model survival times?
+
+Data available on the survival time (in weeks) of 20 rats that were exposed to a high level of radiation
+]
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-6-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Two-parameter example
+
+.large[
+Proposed model: 
+
+$$
+`\begin{aligned}
+Y_i | \alpha, \beta &amp; \overset{\rm iid}{\sim} \text{Gamma}(\alpha, \beta)\\
+\alpha &amp;\sim \text{Gamma}(5, 1)\\
+\beta &amp;\sim \text{Gamma}(2, 1)
+\end{aligned}`
+$$
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+Recall: If `\(X \sim \text{Gamma}(a, b)\)`, then it has PDF
+
+$$
+f(x | a, b) = \dfrac{b^a}{\Gamma(a)} x^{a-1} e^{-bx}
+$$
+
+]
+
+---
+class: inverse
+
+# Your turn
+
+.large[
+Since you don't recognize the form of the joint posterior, you decide to go after the marginal posteriors via integration. For example
+
+`$$p(\beta | y_1, \ldots, y_n) = \int_0^\infty p(\alpha, \beta | y_1, \ldots, y_n) d\alpha$$`
+
+.bolder[Take a minute and try to evaluate this integral.]
+
+Compare notes with your neighbor.
+]
+
+---
+
+# Multivariate normal PDF
+
+.large[
+Let `\(\boldsymbol{X}\)` denote a `\(p \times 1\)` random vector, `\(\boldsymbol{\mu}\)` denote the mean vector, and `\(\boldsymbol{\Sigma}\)` denote the covariance matrix.
+
+&lt;br&gt;
+
+`$$f({\bf X}) = (2\pi)^{p/2} |\boldsymbol{\Sigma}|^{1/2} \exp\left[ -\frac{1}{2} ({\bf X} - \boldsymbol{\mu})^T \boldsymbol{\Sigma}^{-1} ({\bf X} - \boldsymbol{\mu}) \right]$$`
+
+&lt;br&gt;
+
+- Contours of log PDF are elliptical
+
+- All conditional and marginal distributions are also normal
+]
+
+
+---
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-7-1.svg" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-8-1.svg" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```r
+lgamma_post &lt;- function(theta, data) {
+  # extract parameters
+  alpha &lt;- theta[1]
+  beta  &lt;- theta[2]
+  
+  # calculate log likelihood
+  loglike &lt;- 0 
+  for(i in 1:length(data)) {
+    loglike &lt;- loglike + dgamma(data[i], alpha, beta, log = TRUE)
+  }
+  
+  # calculate log posterior
+  post &lt;- loglike + dgamma(alpha, 5, 1, log = TRUE) + 
+    dgamma(alpha, 2, 1, log = TRUE)
+  
+  # return log posterior value
+  return(post)
+}
+
+library(LearnBayes)
+gamma_fit &lt;- laplace(
+  lgamma_post,     # log posterior density function
+  mode = c(8, 1),  # initial guess for MAP estimate
+  data = times     # observed data
+)
+```
+
+---
+
+
+```r
+gamma_fit
+```
+
+```
+## $mode
+## [1] 4.85553691 0.04280149
+## 
+## $var
+##            [,1]         [,2]
+## [1,] 1.49675294 0.0131818444
+## [2,] 0.01318184 0.0001349361
+## 
+## $int
+## [1] -110.4008
+## 
+## $converge
+## [1] TRUE
+```
+
+- `\(\widehat{\boldsymbol{\theta}}_{MAP}=\)` `mode`
+
+- `\(\widehat{\boldsymbol{\Sigma}}_{MAP}=\)` `var` 
+
+---
+
+.large[
+Posterior variance of each parameter is on the diagonal of `\(\widehat{\boldsymbol{\Sigma}}_{MAP}=\)` `var`
+
+Credible intervals can be calculated using the normal distribution:
+
+`$$\widehat{\boldsymbol{\theta}}_{i} \pm q \cdot \widehat{\boldsymbol{\Sigma}}_{ii}$$`
+
+
+```r
+post_sd &lt;- sqrt(diag(gamma_fit$var))
+
+gamma_fit$mode -  qnorm(0.975) * post_sd
+```
+
+```
+## [1] 2.45768062 0.02003415
+```
+
+```r
+gamma_fit$mode +  qnorm(0.975) * post_sd
+```
+
+```
+## [1] 7.25339320 0.06556882
+```
+]
+
+---
+
+# Recap
+
+.large[
+Just to put everything in one place, here is a table summarizing the posterior distribution for this example:
+
+&lt;br&gt;
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; MAP &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; SD &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; lower &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; upper &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 4.86 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.22 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.46 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 7.25 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 0.04 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.01 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.02 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.07 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+]
+
+
+---
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-13-1.svg" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Simulation
+
+If you wanted to estimate the mean survival time, the MAP estimate is `\(\widehat{\alpha}/\widehat{\beta}\)`
+
+If you want more than a point estimate, simulate from the MVN distribution
+
+
+```r
+library(MASS)
+posterior_samples &lt;- mvrnorm(1000, gamma_fit$mode, gamma_fit$var)
+mean_survival &lt;- posterior_samples[,1] / posterior_samples[,2]
+```
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-15-1.svg" style="display: block; margin: auto;" /&gt;
+
+
+
+---
+
+# Another two-parameter example
+
+.large[
+How can we model cancer mortality data?
+
+Data available for 20 cities in Missouri on stomach cancer mortality
+
+&lt;br&gt;
+
+
+
+
+Variable | Description
+:--------:|------------------
+`y`  | number of cancer deaths
+`n`  | number at risk between 45 and 64
+
+]
+
+.footnote[
+Adapted from *Bayesian Computation with R* and Tsutakawa et al (1985)
+]
+
+---
+
+# Likelihood
+
+.large[
+These data display more variation than the binomial model allows (i.e. they are overdispersed)
+
+A beta-binomial model is a better idea for the likelihood:
+
+$$
+f(y_i | \eta, K) = \dbinom{n_i}{y_i} \dfrac{\text{Beta}(K \eta + y_i,\ K(1-\eta) + (n_i - y_i))}{\text{Beta}(K \eta,\ K(1-\eta))}
+$$
+
+where
+
+- `\(\eta \in (0, 1)\)` is the mean
+
+- `\(K &gt; 0\)` is the precision
+
+- `\(\text{Beta}(a, b) = \dfrac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}\)`
+
+]
+
+---
+
+# The posterior
+
+.large[
+The researchers used a vague prior
+
+`$$\pi(\eta, K) \propto \dfrac{1}{\eta (1-\eta)}\cdot \dfrac{1}{(1+K)^2}$$`
+
+&lt;br&gt;
+
+So the posterior, `\(p(\eta, K | {\bf y})\)`, is proportional to
+
+$$
+\dfrac{1}{\eta (1-\eta)}\cdot \dfrac{1}{(1+K)^2} \prod_{i=1}^{20} \dfrac{\text{Beta}(K \eta + y_i,\ K(1-\eta) + (n_i - y_i))}{\text{Beta}(K \eta,\ K(1-\eta))}
+$$
+]
+
+---
+
+### Log posterior density
+
+
+```r
+lbetabinom_post0 &lt;- function(theta, data) {
+  eta &lt;- theta[1]
+  K   &lt;- theta[2]
+  
+  y &lt;- data[,1]
+  n &lt;- data[,2]
+
+  N &lt;- length(y)
+  
+  lpost &lt;- 0
+  for(i in 1:N) {
+    lpost &lt;- lpost + 
+      lbeta(K * eta + y[i], K * (1 - eta) + n[i] - y[i])
+  }
+  lpost &lt;- lpost - N * lbeta(K * eta, K * (1 - eta))
+  lpost &lt;- lpost - log(eta) - log(1 - eta) - 2 * log(1 + K)
+  
+  return(lpost)
+}
+```
+
+.footnote[
+`lbeta()` function provides the natural log of the beta function
+]
+
+---
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-18-1.svg" width="85%" style="display: block; margin: auto;" /&gt;
+
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+How can you transform the following parameters to be real valued; that is, what function of the parameter will have range `\((-\infty, \infty)\)`?
+
+1. `\(\eta \in (0, 1)\)`
+
+2. `\(K &gt; 0\)`
+
+Discuss these transformations with a neighbor.
+
+]
+
+---
+
+
+```r
+lbetabinom_post &lt;- function(theta, data) {
+* theta1 &lt;- theta[1]
+* theta2 &lt;- theta[2]
+  
+* eta &lt;- exp(theta1) / (1 + exp(theta1))
+* K   &lt;- exp(theta2)
+  
+  y &lt;- data[,1]
+  n &lt;- data[,2]
+
+  N &lt;- length(y)
+  
+  lpost &lt;- 0
+  for(i in 1:N) {
+    lpost &lt;- lpost + 
+      lbeta(K * eta + y[i], K * (1 - eta) + n[i] - y[i])
+  }
+  lpost &lt;- lpost - N * lbeta(K * eta, K * (1 - eta))
+  lpost &lt;- lpost - log(eta) - log(1 - eta) - 2 * log(1 + K)
+  
+  return(lpost)
+}
+```
+
+---
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-20-1.svg" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-22-1.svg" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="12-bayesian-clt_files/figure-html/unnamed-chunk-23-1.svg" width="85%" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

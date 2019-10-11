@@ -1,0 +1,866 @@
+---
+title: "Deterministic computational approaches"
+author: "Math 315: Bayesian Statistics"
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: middle, clear
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(gridExtra)
+library(ggplot2)
+library(ggthemes)
+library(LearnBayes)
+```
+
+## 1. MAP estimation
+
+## 2. Numerical integration
+
+## 3. Bayesian CLT 
+
+---
+
+# One-parameter example
+
+.large[
+.content-box-blue[
+Does storage in a high-quality freezer improve the taste of hamburgers to justify the extra effort/cost associated with purchasing new equipment?
+]
+]
+
+.large[
+- Suppose 16 consumers have been recruited by a fast food chain to compare two types of ground beef patty on the basis of flavor
+
+- All patties kept frozen for 8 months
+    + One set (16 patties) in a high-quality freezer, maintains $0\pm 1^\circ$ F
+    + Other set in a freezer where temperature varies between 0 and 15 $^\circ$F 
+]
+
+---
+
+# One-parameter example
+
+.large[
+
+- In test kitchen, patties thawed and prepared by single chef
+
+- Each consumer served the patties in a random order
+
+- Neither consumers nor servers know which patty is which (double blind)
+
+- $Y =$ 13 out of 16 consumers preferred the more-expensive patty
+
+]
+
+---
+
+
+.left-column[
+
+.large[
+<br>
+.bold[Notation]
+
+<br> 
+
+<br>
+
+.bold[Assumption]
+
+<br>
+
+.bold[Likelihood]
+
+<br>
+
+.bold[Prior]
+
+<br>
+
+.bold[Posterior]
+]
+]
+
+.right-column[
+
+.large[
+
+$Y_i =$ #  prefer the more-expensive patty
+
+$\theta =$ prob. selects more-expensive patty 
+
+<br>
+
+Consumers independent; $\theta$ is constant 
+
+<br> 
+
+$Y|\theta \sim \text{Binomial}(n, \theta)$ 
+
+<br>
+
+$\theta \sim \text{Beta}(a, b) \qquad \qquad \qquad$ (conjugate prior) 
+
+<br>
+
+$\theta | Y \sim \text{Beta}(a + Y, b + N)$
+]
+
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+Let's pretend we didn't know that the posterior followed a beta distribution...
+
+Discuss with your neighbor how you might summarize the posterior distribution in this example
+]
+
+---
+
+# Point estimation
+
+.large[
+.content-box-blue[
+.bold[MAP estimate]
+
+the value of $\theta$ that maximizes the posterior distribution
+]
+
+
+
+]
+
+---
+
+# Point estimation
+
+.left-column[
+.large[
+<br>
+.bolder[When?]
+
+<br>
+<br>
+
+.bolder[Benefit?]
+
+<br>
+
+<br>
+<br>
+
+
+.bolder[Drawback?]
+]
+]
+.large[
+.right-column[
+Sometimes you don’t need an entire posterior distribution
+and a single point estimate will do
+
+- Example:  prediction in machine learning
+
+Very fast computation
+
+- Closed-form solution via calculus
+
+- Fast optimization algorithms<br> (e.g. Newton's method)
+
+*No uncertainty expressed!*
+
+]
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+
+Write down an integral of $p(\theta | Y)$ that you could solve to find the following posterior summaries:
+
+1. Posterior mean
+
+2. Posterior variance
+
+3. Posterior probability that $\theta \in [\ell, u]$
+
+]
+
+
+---
+
+# Numeric integration
+
+
+.left-column[
+.large[
+<br>
+.bolder[When?]
+
+<br>
+
+<br>
+
+<br>
+
+.bolder[Benefit?]
+
+<br>
+
+
+
+.bolder[Drawback?]
+]
+]
+.large[
+.right-column[
+Many posterior summaries of interest are integrals over the
+posterior
+
+These are *p*-dimensional integrals that we usually can’t
+solve analytically
+
+- Example: posterior mean, SD, probability
+
+"Easy" computation
+
+- `adaptIntegrate()` in R
+
+Choice of quadrature methods depends on location and shape of the posterior
+
+Only feasible for small number of parameters
+
+]
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+
+Discuss with your neighbor:
+
+What does the Central Limit Theorem (CLT) tell us?
+
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+
+Discuss with your neighbor:
+
+Think back to Math 275, do you remember the asymptotic distribution of the MLE?
+
+]
+
+
+---
+
+# Bayesian CLT
+
+
+```{r echo=FALSE, fig.width = 5, fig.height=3.5, fig.align='center', out.width="80%"}
+theta <- seq(0, 1, length = 500)
+phat <- 13/16
+pvar <- phat * (1 - phat) / 16
+ggplot() +
+  geom_line(aes(x = theta, y = dbeta(theta, 14, 4), 
+                linetype = "exact (beta)",  color = "exact (beta)")) +
+  geom_line(aes(x = theta, y = dnorm(theta, phat, sqrt(pvar)), 
+                linetype = "approximate (normal)", color = "approximate (normal)")) +
+  scale_color_colorblind("") +
+  scale_linetype_manual("", values = c(2, 1)) +
+  theme_light() +
+  labs(
+    x = expression(theta),
+    y = "posterior density",
+    title = "Y = 13; N = 16"
+  ) +
+  theme(legend.position = c(.4, .8))
+```
+
+---
+
+# Bayesian CLT
+
+```{r echo=FALSE, fig.width = 5, fig.height=3.5, fig.align='center', out.width="80%"}
+theta <- seq(0, 1, length = 500)
+Y <- 26
+N <- 32
+phat <- Y/N
+pvar <- phat * (1 - phat) / N
+ggplot() +
+  geom_line(aes(x = theta, y = dbeta(theta, Y + 1, N - Y + 1), 
+                linetype = "exact (beta)",  color = "exact (beta)")) +
+  geom_line(aes(x = theta, y = dnorm(theta, phat, sqrt(pvar)), 
+                linetype = "approximate (normal)", color = "approximate (normal)")) +
+  scale_color_colorblind("") +
+  scale_linetype_manual("", values = c(2, 1)) +
+  theme_light() +
+  labs(
+    x = expression(theta),
+    y = "posterior density",
+    title = paste0("Y = ", Y, "; N = ", N)
+  ) +
+  theme(legend.position = c(.4, .8))
+```
+
+---
+
+# Bayesian CLT
+
+```{r echo=FALSE, fig.width = 5, fig.height=3.5, fig.align='center', out.width="80%"}
+theta <- seq(0, 1, length = 500)
+Y <- 3 * 13
+N <- 3 * 16
+phat <- Y/N
+pvar <- phat * (1 - phat) / N
+ggplot() +
+  geom_line(aes(x = theta, y = dbeta(theta, Y + 1, N - Y + 1), 
+                linetype = "exact (beta)",  color = "exact (beta)")) +
+  geom_line(aes(x = theta, y = dnorm(theta, phat, sqrt(pvar)), 
+                linetype = "approximate (normal)", color = "approximate (normal)")) +
+  scale_color_colorblind("") +
+  scale_linetype_manual("", values = c(2, 1)) +
+  theme_light() +
+  labs(
+    x = expression(theta),
+    y = "posterior density",
+    title = paste0("Y = ", Y, "; N = ", N)
+  ) +
+  theme(legend.position = c(.4, .8))
+```
+
+---
+
+# Bayesian CLT
+
+```{r echo=FALSE, fig.width = 5, fig.height=3.5, fig.align='center', out.width="80%"}
+theta <- seq(0, 1, length = 500)
+Y <- 5 * 13
+N <- 5 * 16
+phat <- Y/N
+pvar <- phat * (1 - phat) / N
+ggplot() +
+  geom_line(aes(x = theta, y = dbeta(theta, Y + 1, N - Y + 1), 
+                linetype = "exact (beta)",  color = "exact (beta)")) +
+  geom_line(aes(x = theta, y = dnorm(theta, phat, sqrt(pvar)), 
+                linetype = "approximate (normal)", color = "approximate (normal)")) +
+  scale_color_colorblind("") +
+  scale_linetype_manual("", values = c(2, 1)) +
+  theme_light() +
+  labs(
+    x = expression(theta),
+    y = "posterior density",
+    title = paste0("Y = ", Y, "; N = ", N)
+  ) +
+  theme(legend.position = c(.4, .8))
+```
+
+---
+
+# Bayesian CLT
+
+```{r echo=FALSE, fig.width = 5, fig.height=3.5, fig.align='center', out.width="80%"}
+theta <- seq(0, 1, length = 500)
+Y <- 10 * 13
+N <- 10 * 16
+phat <- Y/N
+pvar <- phat * (1 - phat) / N
+ggplot() +
+  geom_line(aes(x = theta, y = dbeta(theta, Y + 1, N - Y + 1), 
+                linetype = "exact (beta)",  color = "exact (beta)")) +
+  geom_line(aes(x = theta, y = dnorm(theta, phat, sqrt(pvar)), 
+                linetype = "approximate (normal)", color = "approximate (normal)")) +
+  scale_color_colorblind("") +
+  scale_linetype_manual("", values = c(2, 1)) +
+  theme_light() +
+  labs(
+    x = expression(theta),
+    y = "posterior density",
+    title = paste0("Y = ", Y, "; N = ", N)
+  ) +
+  theme(legend.position = c(.4, .8))
+```
+
+---
+
+# Bayesian CLT
+
+
+.left-column[
+.large[
+<br>
+.bolder[When?]
+
+<br>
+
+
+.bolder[Benefit?]
+<br><br>
+
+<br>
+
+.bolder[Drawback?]
+]
+]
+.large[
+.right-column[
+For large data sets with a small number of parameters
+evoking the Bayes CLT is probably the best approach
+
+
+The approximate posterior can be computing using
+standard software
+
+Can handle larger number of parameters
+
+Posterior must be unimodal
+
+Accuracy issues — only works for large data sets
+
+Posterior can have positive density outside of the parameter space
+
+Sensitive to starting value
+
+
+
+]
+]
+
+---
+
+# Two-parameter example
+
+.large[
+How can we model survival times?
+
+Data available on the survival time (in weeks) of 20 rats that were exposed to a high level of radiation
+]
+
+```{r, echo=FALSE, fig.width=7, fig.height = 3, fig.align='center', out.width="100%"}
+times <- c(152, 152, 115, 109, 137, 88, 94, 77, 160, 165,
+           125, 40, 128, 123, 136, 101, 62, 153, 83, 69)
+
+p1 <- ggplot() +
+  geom_histogram(aes(x = times), bins = 6) +
+  labs(x = "Survival time (weeks)") +
+  theme_light()
+
+p2 <- ggplot() +
+  geom_density(aes(x = times)) +
+  labs(x = "Survival time (weeks)") +
+  theme_light()
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+---
+
+# Two-parameter example
+
+.large[
+Proposed model: 
+
+$$
+\begin{aligned}
+Y_i | \alpha, \beta & \overset{\rm iid}{\sim} \text{Gamma}(\alpha, \beta)\\
+\alpha &\sim \text{Gamma}(5, 1)\\
+\beta &\sim \text{Gamma}(2, 1)
+\end{aligned}
+$$
+
+<br>
+
+<br>
+
+Recall: If $X \sim \text{Gamma}(a, b)$, then it has PDF
+
+$$
+f(x | a, b) = \dfrac{b^a}{\Gamma(a)} x^{a-1} e^{-bx}
+$$
+
+]
+
+---
+class: inverse
+
+# Your turn
+
+.large[
+Since you don't recognize the form of the joint posterior, you decide to go after the marginal posteriors via integration. For example
+
+$$p(\beta | y_1, \ldots, y_n) = \int_0^\infty p(\alpha, \beta | y_1, \ldots, y_n) d\alpha$$
+
+.bolder[Take a minute and try to evaluate this integral.]
+
+Compare notes with your neighbor.
+]
+
+---
+
+# Multivariate normal PDF
+
+.large[
+Let $\boldsymbol{X}$ denote a $p \times 1$ random vector, $\boldsymbol{\mu}$ denote the mean vector, and $\boldsymbol{\Sigma}$ denote the covariance matrix.
+
+<br>
+
+$$f({\bf X}) = (2\pi)^{p/2} |\boldsymbol{\Sigma}|^{1/2} \exp\left[ -\frac{1}{2} ({\bf X} - \boldsymbol{\mu})^T \boldsymbol{\Sigma}^{-1} ({\bf X} - \boldsymbol{\mu}) \right]$$
+
+<br>
+
+- Contours of log PDF are elliptical
+
+- All conditional and marginal distributions are also normal
+]
+
+
+---
+
+```{r echo=FALSE, fig.height = 5, fig.width = 5, out.width = "85%", fig.align='center'}
+lgamma_post <- function(theta, data) {
+  # set up parameters
+  alpha <- theta[1]
+  beta  <- theta[2]
+  
+  loglike <- 0 
+  for(i in 1:length(data)) {
+    loglike <- loglike + dgamma(data[i], alpha, beta, log = TRUE)
+  }
+  
+  post <- loglike + dgamma(alpha, 5, 1, log = TRUE) + dgamma(alpha, 2, 1, log = TRUE)
+  
+  return(post)
+}
+
+mycontour(lgamma_post, limits = c(xlo = 0, xhi = 15, ylo = 0, yhi = .15), data = times, main = "Log posterior")
+title(xlab = expression(alpha), ylab = expression(beta))
+```
+
+---
+
+```{r echo=FALSE, fig.height = 5, fig.width = 5, out.width = "85%", fig.align='center'}
+gamma_fit <- laplace(lgamma_post, mode = c(8, 1), data = times)
+
+npar = list(m = gamma_fit$mode, v = gamma_fit$var)
+mycontour(lbinorm, limits = c(xlo = 0, xhi = 15, ylo = 0, yhi = .15), npar, main = "Approximate log posterior")
+title(xlab = expression(alpha), ylab = expression(beta))
+```
+
+---
+
+```{r eval=FALSE}
+lgamma_post <- function(theta, data) {
+  # extract parameters
+  alpha <- theta[1]
+  beta  <- theta[2]
+  
+  # calculate log likelihood
+  loglike <- 0 
+  for(i in 1:length(data)) {
+    loglike <- loglike + dgamma(data[i], alpha, beta, log = TRUE)
+  }
+  
+  # calculate log posterior
+  post <- loglike + dgamma(alpha, 5, 1, log = TRUE) + 
+    dgamma(alpha, 2, 1, log = TRUE)
+  
+  # return log posterior value
+  return(post)
+}
+
+library(LearnBayes)
+gamma_fit <- laplace(
+  lgamma_post,     # log posterior density function
+  mode = c(8, 1),  # initial guess for MAP estimate
+  data = times     # observed data
+)
+```
+
+---
+
+```{r}
+gamma_fit
+```
+
+- $\widehat{\boldsymbol{\theta}}_{MAP}=$ `mode`
+
+- $\widehat{\boldsymbol{\Sigma}}_{MAP}=$ `var` 
+
+---
+
+.large[
+Posterior variance of each parameter is on the diagonal of $\widehat{\boldsymbol{\Sigma}}_{MAP}=$ `var`
+
+Credible intervals can be calculated using the normal distribution:
+
+$$\widehat{\boldsymbol{\theta}}_{i} \pm q \cdot \widehat{\boldsymbol{\Sigma}}_{ii}$$
+
+```{r}
+post_sd <- sqrt(diag(gamma_fit$var))
+
+gamma_fit$mode -  qnorm(0.975) * post_sd
+
+gamma_fit$mode +  qnorm(0.975) * post_sd
+```
+]
+
+---
+
+# Recap
+
+.large[
+Just to put everything in one place, here is a table summarizing the posterior distribution for this example:
+
+<br>
+
+```{r echo=FALSE, results='asis'}
+post_summary <- data.frame(
+  MAP = gamma_fit$mode,
+  SD  = post_sd,
+  lower = gamma_fit$mode -  qnorm(0.975) * post_sd,
+  upper = gamma_fit$mode +  qnorm(0.975) * post_sd
+)
+
+knitr::kable(post_summary, format = "html", digits = 2)
+```
+]
+
+
+---
+
+```{r echo=FALSE, fig.height = 5, fig.width = 5, out.width = "85%", fig.align='center'}
+
+mycontour(lgamma_post, limits = c(xlo = 1, xhi = 15, ylo = 0, yhi = .15), data = times, drawlabels = FALSE)
+mycontour(lbinorm, limits = c(xlo = 0, xhi = 15, ylo = 0, yhi = .15), npar, add = TRUE, col = "darkorange", lty = 2, drawlabels = FALSE)
+title(xlab = expression(alpha), ylab = expression(beta), main = "Log posteriors")
+legend("topleft", c("Log posterior", "Normal approximation"), lty = c(1, 2), 
+       col = c("black", "darkorange"), bty = "n")
+```
+
+---
+
+# Simulation
+
+If you wanted to estimate the mean survival time, the MAP estimate is $\widehat{\alpha}/\widehat{\beta}$
+
+If you want more than a point estimate, simulate from the MVN distribution
+
+```{r}
+library(MASS)
+posterior_samples <- mvrnorm(1000, gamma_fit$mode, gamma_fit$var)
+mean_survival <- posterior_samples[,1] / posterior_samples[,2]
+```
+
+```{r echo=FALSE, fig.height = 3, fig.width = 5.5, message=FALSE, fig.align='center'}
+ggplot() +
+  geom_histogram(aes(x = mean_survival)) +
+  labs(x = "Mean survival time (weeks)") +
+  theme_light()
+```
+
+
+
+---
+
+# Another two-parameter example
+
+.large[
+How can we model cancer mortality data?
+
+Data available for 20 cities in Missouri on stomach cancer mortality
+
+<br>
+
+```{r echo=FALSE}
+library(LearnBayes)
+data("cancermortality")
+```
+
+
+Variable | Description
+:--------:|------------------
+`y`  | number of cancer deaths
+`n`  | number at risk between 45 and 64
+
+]
+
+.footnote[
+Adapted from *Bayesian Computation with R* and Tsutakawa et al (1985)
+]
+
+---
+
+# Likelihood
+
+.large[
+These data display more variation than the binomial model allows (i.e. they are overdispersed)
+
+A beta-binomial model is a better idea for the likelihood:
+
+$$
+f(y_i | \eta, K) = \dbinom{n_i}{y_i} \dfrac{\text{Beta}(K \eta + y_i,\ K(1-\eta) + (n_i - y_i))}{\text{Beta}(K \eta,\ K(1-\eta))}
+$$
+
+where
+
+- $\eta \in (0, 1)$ is the mean
+
+- $K > 0$ is the precision
+
+- $\text{Beta}(a, b) = \dfrac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}$
+
+]
+
+---
+
+# The posterior
+
+.large[
+The researchers used a vague prior
+
+$$\pi(\eta, K) \propto \dfrac{1}{\eta (1-\eta)}\cdot \dfrac{1}{(1+K)^2}$$
+
+<br>
+
+So the posterior, $p(\eta, K | {\bf y})$, is proportional to
+
+$$
+\dfrac{1}{\eta (1-\eta)}\cdot \dfrac{1}{(1+K)^2} \prod_{i=1}^{20} \dfrac{\text{Beta}(K \eta + y_i,\ K(1-\eta) + (n_i - y_i))}{\text{Beta}(K \eta,\ K(1-\eta))}
+$$
+]
+
+---
+
+### Log posterior density
+
+```{r}
+lbetabinom_post0 <- function(theta, data) {
+  eta <- theta[1]
+  K   <- theta[2]
+  
+  y <- data[,1]
+  n <- data[,2]
+
+  N <- length(y)
+  
+  lpost <- 0
+  for(i in 1:N) {
+    lpost <- lpost + 
+      lbeta(K * eta + y[i], K * (1 - eta) + n[i] - y[i])
+  }
+  lpost <- lpost - N * lbeta(K * eta, K * (1 - eta))
+  lpost <- lpost - log(eta) - log(1 - eta) - 2 * log(1 + K)
+  
+  return(lpost)
+}
+```
+
+.footnote[
+`lbeta()` function provides the natural log of the beta function
+]
+
+---
+
+```{r echo=FALSE, fig.height = 5, fig.width = 5, out.width = "85%", fig.align='center'}
+mycontour(lbetabinom_post0, limits = c(.0001, .003, 1, 20000), data = cancermortality, drawlabels = FALSE)
+title(xlab = expression(eta), ylab = "K", main = "Log posterior")
+```
+
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+How can you transform the following parameters to be real valued; that is, what function of the parameter will have range $(-\infty, \infty)$?
+
+1. $\eta \in (0, 1)$
+
+2. $K > 0$
+
+Discuss these transformations with a neighbor.
+
+]
+
+---
+
+```{r}
+lbetabinom_post <- function(theta, data) {
+  theta1 <- theta[1] #<<
+  theta2 <- theta[2] #<<
+  
+  eta <- exp(theta1) / (1 + exp(theta1)) #<<
+  K   <- exp(theta2) #<<
+  
+  y <- data[,1]
+  n <- data[,2]
+
+  N <- length(y)
+  
+  lpost <- 0
+  for(i in 1:N) {
+    lpost <- lpost + 
+      lbeta(K * eta + y[i], K * (1 - eta) + n[i] - y[i])
+  }
+  lpost <- lpost - N * lbeta(K * eta, K * (1 - eta))
+  lpost <- lpost - log(eta) - log(1 - eta) - 2 * log(1 + K)
+  
+  return(lpost)
+}
+```
+
+---
+
+```{r echo=FALSE, fig.height = 5, fig.width = 5, out.width = "85%", fig.align='center'}
+mycontour(lbetabinom_post, limits = c(-8.1, -4, 2.2, 16.5), data = cancermortality)
+title(xlab = bquote("logit" ~eta), ylab = "log K", main = "Log posterior")
+```
+
+---
+
+```{r echo=FALSE}
+betabinom_fit <- laplace(lbetabinom_post, mode = c(-7,6), 
+                         data = cancermortality)
+```
+
+```{r echo=FALSE, fig.height = 5, fig.width = 5, out.width = "85%", fig.align='center'}
+npar <- list(m = betabinom_fit$mode, v = betabinom_fit$var)
+mycontour(lbinorm, c(-8.1, -4, 2.2, 16.5), npar)
+title(xlab = bquote("logit" ~eta), ylab = "log K", main = "Approximate log posterior")
+```
+
+---
+
+```{r echo=FALSE, fig.height = 5, fig.width = 5, out.width = "85%", fig.align='center'}
+npar <- list(m = betabinom_fit$mode, v = betabinom_fit$var)
+mycontour(lbetabinom_post, limits = c(-8.1, -4, 2.2, 16.5), data = cancermortality)
+mycontour(lbinorm, c(-8.1, -4, 2.2, 16.5), npar, add = TRUE, col= "darkorange", drawlabels = FALSE, lty =2)
+title(xlab = bquote("logit" ~eta), ylab = "log K", main = "Log posterior")
+legend("topright", c("Log posterior", "Normal approximation"), lty = c(1, 2), 
+       col = c("black", "darkorange"), bty = "n")
+```
