@@ -100,6 +100,8 @@ Homework
 
 Exam 1: Wednesday, October 16
 
+[Case study 1](case_study/): Tuesday, October 22 by 4 pm
+
 Exam 2: Wednesday, November 13
 
 Project
