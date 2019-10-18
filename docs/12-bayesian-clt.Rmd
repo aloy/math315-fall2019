@@ -113,7 +113,7 @@ $\theta \sim \text{Beta}(a, b) \qquad \qquad \qquad$ (conjugate prior)
 
 <br>
 
-$\theta | Y \sim \text{Beta}(a + Y, b + N)$
+$\theta | Y \sim \text{Beta}(a + Y, b + n)$
 ]
 
 ]

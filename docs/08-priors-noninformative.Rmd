@@ -1,0 +1,276 @@
+---
+title: "Specifying noninformative/objective priors"
+author: "Math 315: Bayesian Statistics"
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: middle, clear
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(gridExtra)
+library(dplyr)
+library(ggplot2)
+library(triangle)
+library(ggthemes)
+```
+
+## 1. Wrap up specifying informative priors
+
+## 2. Specifying noninformative/objective priors
+
+---
+
+# Natural conjugate priors
+
+.content-box-yellow[
+.large[
+Is there a natural way of constructing a class of conjugate priors given a specific sampling density, $f(y|\theta)$?
+
+*Answer:* Yes, for most of the distributions we have seen in stats up to this point <br>(i.e. *the exponential family of distributions*)
+
+]
+
+]
+
+---
+
+# Exponential family of distributions
+
+.content-box-blue[
+A family of PDFs/PMFs is an exponential family if it can be expressed as
+
+$$f(y | \theta) = h(x) c(\theta) \exp \left( \sum_{i=1}^k w_i(\theta) t_i(x) \right)$$
+
+Note: $k=1$ for a single-parameter model
+]
+
+--
+
+Notice that
+
+$$f(y | \theta) \propto c(\theta) \exp \left( \sum_{i=1}^k w_i(\theta) t_i(x) \right)$$
+
+$t_i(x)$ is said to be a *sufficient statistic* for $\theta$ 
+
+---
+class: middle, center
+
+#Nonconjugate prior elicitation
+
+---
+
+# Histogram approach
+
+.large[
+
+Sometimes it's easier to get a researcher/expert to choose a set of sub-intervals and assign probabilities or relative likelihoods to those intervals.
+
+1. Bin the parameter space
+
+1. Decide on the amount of probability (or the relative "likelihood") in each bin
+
+1. Normalize if required
+]
+
+
+---
+
+class: clear
+
+
+
+```{r}
+# Create a histogram prior using LearnBayes::histprior()
+library(LearnBayes)
+theta <- seq(0, 1, by = 0.001)
+mid_points <- seq(0.05, 0.95, by = .1)
+prior_likelihood <- c(1, 1, 1, 1, 2, 4, 8, 8, 4, 2)
+prior_prob <- prior_likelihood / sum(prior_likelihood)
+
+# Calc. prior probability for every point on the theta grid 
+prior <- histprior(theta, mid_points, prior_prob)
+```
+
+
+```{r fig.height=2.5, fig.width=6, echo=FALSE, fig.align='center', out.width="100%"}
+ggplot(data = NULL) +
+  geom_line(mapping = aes(x = theta, y = prior)) +
+  labs(x = expression(theta),
+       y = "Prior probabilities") +
+  theme_minimal()
+```
+
+
+---
+
+# Relative likelihood approach
+
+
+
+.large[
+
+Instead of choosing intervals, you can have guide an expert to specify key points of a frequency polygon that you can then "fill in".
+
+
+1. Identify the "most likely" and "least likely" points in the parameter space
+
+1. Determine the relative "likelihood" for several more points
+
+1. Interpolate (usually linearly)
+
+1. Normalize
+]
+
+???
+
+This takes the histogram prior approach a step farther. Instead of choosing intervals, you're essentially trying to construct a key points of a frequency polygon that you can then "fill in".
+
+---
+
+class: clear
+
+```{r}
+# set up your prior beliefs
+key_thetas <- seq(0, 1, by = 0.1)
+prior_likelihood <- c(1, 1, 1, 1, 1, 2, 4, 8, 8, 4, 2)
+prior_prob <- prior_likelihood / sum(prior_likelihood)
+
+# interpolate to get the prior via approxfun()
+rel_likelihood <- approxfun(x = key_thetas, y = prior_prob, 
+                            method = "linear")
+
+# calculate the prior probs on the grid
+theta <- seq(0, 1, by = 0.001)
+prior <- rel_likelihood(theta)
+```
+
+
+```{r fig.height=2.5, fig.width=6, echo=FALSE, fig.align='center', out.width="100%"}
+ggplot(data = NULL) +
+  geom_line(mapping = aes(x = theta, y = prior)) +
+  labs(x = expression(theta),
+       y = "Prior probabilities") +
+  theme_minimal()
+```
+
+---
+class: inverse, middle, center
+
+# Noninformative/objective priors
+
+```{r echo=FALSE}
+# Create a histogram prior using LearnBayes::histprior()
+blindsight.grid <- tibble(theta = seq(0, 1, length.out = 1000)) 
+```
+
+---
+
+# Flat/diffuse priors
+
+.large[
+> [A] prior which is dominated by the likelihood is one which does not change very much over the region in which the likelihood is appreciable and does not assume large values outside that range." 
+>
+> For such a prior distribution we can approximate the result of Bayes’ formula (theorem) by substituting a constant for the prior distribution.
+>
+> -Box and Tiao (1973)
+]
+
+.footnote[
+Box, G. E., & Tiao, G. C. (1973). *Bayesian inference in statistical analysis*.
+]
+
+
+???
+
+Box and Tiao use the analogy of a properly run jury trial, wherein the weight of evidence presented in court dominates the prior ideas/biases that may be held by members of the jury.
+
+
+---
+
+# Objective Bayes
+
+.large[
+- An objective Bayesian attempts to replace the subjective
+choice of prior with an algorithm that determines the prior
+
+- There are many approaches: 
+  .pull-left[
++ .bolder[Jeffreys]
++ reference
++ probability matching
++ maximum entropy
+  ]
+  
+.pull-right[
++ empirical Bayes
++ penalized complexity
++ ...and more...
+]
+
+<br>
+
+- Many of these priors are improper and so you have to
+check that the posterior is proper
+]
+
+---
+
+# Jeffreys' prior
+.large[
+- A transfromation invariant prior distribution for $\theta$ is proportional to the square root of the Fisher information 
+
+
+\begin{align*}
+\pi(\theta) &\propto I(\theta)^{1/2}\\
+I(\theta) &= -E \left[ \frac{\partial^2 \log(f(y | \theta))}{\partial\theta} \right]
+\end{align*}
+
+<br>
+
+- Puts more weight in regions of parameter space where the
+data are expected to be more informative
+
+<br>
+
+- Review the change of variables formula from calculus!
+ ]
+ 
+---
+
+.Large[
+Jeffreys' prior for $Y|\theta \sim \text{Binomial}(n, \theta)$
+]
+
+```{r fig.height=3, fig.width=5, fig.align='center', echo=FALSE, out.width="100%", echo=FALSE}
+df <- tibble(theta = c(0, 1))
+df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = 1, shape2 = 1), aes(color = "Flat"), linetype = 1) +
+  stat_function(fun = dbeta, args = list(shape1 = 1/2, shape2 = 1/2), aes(color = "Jeffreys'"), linetype = 2) +
+  labs(x = expression(theta), y = "Density") +
+  theme_minimal() +
+  scale_color_manual("Prior", values = c("black", "darkorange"))
+
+# add the flat prior and Jeffreys' prior to the grid
+blindsight.grid <- blindsight.grid %>%
+  mutate(flat.prior = dbeta(theta, 1, 1),
+         jeffreys.prior = dbeta(theta, 1/2, 1/2))
+```
+
+???
+
+Note that in this case the prior is inversely proportional to the standard deviation. Why does this make sense?
+
+We see that the data has the least effect on the posterior when the true $\theta = 1/2$ , and has the greatest effect near the extremes, $\theta = 0 \text{ or } 1$. 
+
+The Jeffreys prior compensates for this by placing more mass near the extremes of the range, where the data has the strongest effect. We could get the same effect by (for example) setting $p(\theta) \propto 1 / Var(\theta)$ instead of $p(\theta) \propto 1 / Var(theta)^{1/2}$ . However, the former prior is not invariant under reparameterization, as we would prefer.
+

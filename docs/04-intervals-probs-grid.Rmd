@@ -1,0 +1,501 @@
+---
+title: "Posterior analysis & computation"
+author: "Math 315: Bayesian Statistics"
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: middle, clear
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(gridExtra)
+library(dplyr)
+library(ggplot2)
+library(triangle)
+```
+
+## 1. Summarizing the posterior
+
+## 2. Basics of Bayesian computing
+
+---
+
+# Posterior analysis
+
+.large[
+> To a Bayesian, the best information one can ever have about $\theta$ is to know the posterior density.
+>
+> — Christensen, et al; *Bayesian Ideas and Data Analysis*, p. 31
+]
+
+.center[
+```{r echo=FALSE, fig.height = 3, fig.width = 5, out.width = '75%'}
+df <- tibble(theta = c(0, 1)) 
+
+df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = 15, shape2 = 17 - 14 + 1)) +
+  labs(x = expression(theta), y = "density") +
+  theme_minimal()
+```
+]
+
+---
+
+# Point estimates
+
+.Large[
+- <font color = "#9C27B0"> <strong>Posterior mean</strong> </font>
+- <font color = "#26A69A"> <strong>Posterior median </strong></font>
+- <font color = "#FDD835"> <strong>Posterior mode </strong></font> — i.e. *maximum a posteriori* (MAP) estimate
+]
+
+.center[
+```{r echo=FALSE, fig.height = 3, fig.width = 5, out.width = '80%'}
+a <- 14 + 1
+b <- 17 - 14 + 1
+post_mean <- a / (a + b)
+post_mode <- (a - 1) / (a + b - 2)
+post_median <- qbeta(0.5, shape1 = a, shape2 = b)
+df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+  geom_point(aes(x = post_mean, y = dbeta(post_mean, shape1 = a, shape2 = b), color = "mean")) +
+  geom_point(aes(x = post_mode, y = dbeta(post_mode, shape1 = a, shape2 = b), color = "mode")) +
+  geom_point(aes(x = post_median, y = dbeta(post_median, shape1 = a, shape2 = b), color = "median")) +
+  labs(x = expression(theta), y = "density") +
+  scale_color_viridis_d("Estimate") +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+]
+
+---
+
+# Credible intervals
+
+.center[
+```{r ci1, echo=FALSE, fig.height = 3, fig.width = 5, out.width = '80%'}
+ci1 <- df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+  geom_area(stat = "function", fun = dbeta, args = list(shape1 = a, shape2 = b), 
+            xlim = c(qbeta(0.055, a, b), qbeta(1 - 0.055, a, b)), alpha = 0.5, fill = "steelblue") +
+  labs(x = expression(theta), y = "density",
+       title = "89% equal-tailed credible interval") +
+  scale_color_viridis_d("Estimate") +
+  theme_minimal() +
+  theme(legend.position = "top")
+ci1
+```
+]
+
+```{r}
+# q*() functions calculate quantiles from the specified distribution
+c(lower = qbeta(0.055, 14, 4), upper = qbeta(1 - 0.055, 14, 4))
+```
+
+---
+
+# Credible intervals are not unique
+
+.large[Here are three 89% credible intervals]
+
+<br>
+
+```{r ci2, echo=FALSE, fig.height = 2, fig.width = 7, out.width = '100%'}
+ci1 <- ci1 + ggtitle(expression("(q"[0.055]*', q'[0.945]*")"))
+
+ci2 <- df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+  geom_area(stat = "function", fun = dbeta, args = list(shape1 = a, shape2 = b), 
+            xlim = c(qbeta(0.00001, a, b), qbeta(0.89, a, b)), alpha = 0.5, fill = "steelblue") +
+  labs(x = expression(theta), y = "density",
+       title = expression("(q"[0.00]*', q'[0.89]*")")) +
+  scale_color_viridis_d("Estimate") +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+ci3 <- df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+  geom_area(stat = "function", fun = dbeta, args = list(shape1 = a, shape2 = b), 
+            xlim = c(qbeta(0.11, a, b), qbeta(0.999999999, a, b)), alpha = 0.5, fill = "steelblue") +
+  labs(x = expression(theta), y = "density",
+       title = expression("(q"[0.11]*', q'[100]*")")) +
+  scale_color_viridis_d("Estimate") +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+grid.arrange(ci1, ci2, ci3, ncol = 3)
+```
+
+---
+
+# Highest Posterior Density Interval (HPDI)
+
+.center[
+
+```{r hpdi, fig.height = 3.5, fig.width = 6, echo=FALSE}
+library(HDInterval) 
+post_samples <- rbeta(1e5, a, b)
+
+df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+  geom_area(stat = "function", fun = dbeta, args = list(shape1 = a, shape2 = b), 
+            xlim = hdi(post_samples, credMass = 0.89), alpha = 0.5, fill = "steelblue") +
+  labs(x = expression(theta), y = "density",
+       title = "89% Highest Posterior Density Interval") +
+  scale_color_viridis_d("Estimate") +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+]
+
+---
+class: center
+```{r ci1, fig.height = 3, fig.width = 6, echo=FALSE}
+```
+
+```{r hpdi, fig.height = 3, fig.width = 6, echo=FALSE}
+```
+
+---
+
+# Testing a hypothesis
+
+.large[
+Suppose the researchers were interested in testing
+
+
+.pull-left[
+
+$H_0: \theta \le 0.5$
+
+$P(\theta \le 0.5 | Y = 14) = `r round(pbeta(0.5, a, b), 3)`$
+
+```{r, echo=FALSE, fig.width = 3.5, fig.height = 2.5}
+
+df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+  geom_area(stat = "function", fun = dbeta, args = list(shape1 = a, shape2 = b), 
+            xlim = c(0, 0.5), alpha = 0.5, fill = "steelblue") +
+  labs(x = expression(theta), y = "density") +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+
+]
+
+.pull-right[
+
+$H_1: \theta > 0.5$
+
+$P(\theta > 0.5 | Y = 14) = `r 1 - round(pbeta(0.5, a, b), 3)`$
+
+```{r, echo=FALSE, fig.width = 3.5, fig.height = 2.5}
+df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dbeta, args = list(shape1 = a, shape2 = b)) +
+  geom_area(stat = "function", fun = dbeta, args = list(shape1 = a, shape2 = b), 
+            xlim = c(0.5, 1), alpha = 0.5, fill = "steelblue") +
+  labs(x = expression(theta), y = "density") +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+]
+
+]
+
+---
+class: inverse, middle
+
+# Basics of Bayesian computing
+
+---
+
+# Design, redux (for the last time)
+
+.large[
+**Data:** N N N N <font color = "tomato">B B</font> N N N  <font color = "tomato">B</font> N N N N N N N (14 Ns; <font color = "tomato">3 Bs</font>)
+
+<br>
+
+**Data model:**
+
+Some true proportion of guesses, $\theta$
+
+Toss a coin with probability of heads, $\theta$
+
+<br>
+
+**Belief about $\theta$:**
+
+Researchers believe that $\theta = 2/3$ is most likely
+]
+
+---
+
+## Triangle distribution
+
+.large[
+$$f(\theta | a, b, c) = 
+  \begin{cases}
+  \frac{2(\theta -a)}{(b-a)(c-a)} & a \le \theta  <c,\\
+  \frac{2(b-\theta )}{(b-a)(b-c)} & c \le \theta  <b,\\
+  0 & \text{otherwise.}
+  \end{cases}$$
+]
+
+```{r echo=FALSE, dev = 'svg', fig.width = 5, fig.height = 2.5, fig.align='center', out.width="75%"}
+df <- tibble(theta = c(0, 1)) 
+
+df %>%
+  ggplot(aes(x = theta)) +
+  stat_function(fun = dtriangle, args = list(a = 0, b = 1, c = 2/3), n = 1000) +
+  labs(x = expression(theta), y = "density") +
+  theme_minimal() + 
+  labs(title = "Triangle(a = 0, b = 1, c = 2/3) distribution")
+```
+
+---
+
+## Posterior derivation
+.large[
+.pull-left[
+$$\pi(\theta) = 
+  \begin{cases}
+  3\theta& 0 \le \theta  <2/3,\\
+  6(1-\theta) & 2/3 \le \theta  < 1,\\
+  0 & \text{otherwise.}
+  \end{cases}$$
+  
+$f(Y | \theta) = \dbinom{n}{y} \theta^Y (1-\theta)^{n-Y}$
+
+$$p(\theta | Y) \propto
+  \begin{cases}
+  \theta^{Y+1} (1-\theta)^{n-Y} & 0 \le \theta  <2/3,\\
+  \theta^{Y} (1-\theta)^{n-Y+1} & 2/3 \le \theta  < 1,\\
+  0 & \text{otherwise.}
+  \end{cases}$$
+]
+
+.pull-right[
+
+]
+
+.content-box-blue[
+This is not a "known" distribution...
+]
+
+]
+
+
+---
+
+
+
+## Grid approximate posterior
+
+.Large[
+1. Choose a grid of values of $\theta$ over an interval that covers the posterior density.
+
+2. Compute likelihood $\times$ prior on the grid.
+
+3. Normalize by dividing each product by the sum of the products.
+]
+
+
+---
+
+## Grid approximate posterior
+
+.large[
+```{r echo=FALSE}
+library(triangle) # for triangle dsn PDF 
+blindsight2 <- tibble(theta = seq(0, 1, by = 0.001)) %>% 
+  mutate(prior = dtriangle(theta, a = 0, b = 1, c = 2/3),            
+         likelihood = dbinom(x = 14, size = 17, prob = theta),       
+         unstd.posterior = prior * likelihood,                      
+         posterior = unstd.posterior / sum(unstd.posterior)) 
+
+blindsight2
+```
+
+.content-box-blue[We've approximated the PDF with a PMF...]
+]
+
+---
+
+## Grid approximate posterior
+
+```{r dev = 'svg', fig.width = 5, fig.height = 2.5, out.width="90%", fig.align='center', echo=FALSE}
+# plot the approx posterior
+blindsight2 %>%
+  ggplot(mapping = aes(x = theta)) +
+  geom_line(mapping = aes(y = posterior)) +
+  labs(x = expression(theta), y = "posterior probabilities") +
+  theme_minimal()
+```
+
+.large[
+.content-box-blue[
+We've approximated the PDF with a PMF... with pretty good results!
+]
+]
+
+---
+
+## What do we want to do with our posterior?
+
+.Large[
+- Calculate point estimates 
+
+    e.g. Calculate the posterior mean or MAP estimate
+  
+
+- Determine an interval with specified probability
+
+    e.g. Find an 97% credible interval for $\theta$
+
+- Determine probability in a fixed interval
+
+    e.g. Find $P(\theta > 0.75)$
+  
+]
+
+---
+
+## How can we use the grid-approximate posterior?
+.large[
+.content-box-blue[
+**Monte Carlo Sampling**
+
+Draw a sample of size $S$ from the posterior
+
+$$\theta^{(1)}, \theta^{(2)}, \ldots, \theta^{(S)} \sim p(\theta | Y)$$
+
+and use these samples to approximate the posterior
+]
+]
+
+---
+
+## Monte Carlo sampling
+
+```{r echo=FALSE}
+posterior_sample <-
+  with(blindsight2, 
+       sample(theta,            # choose one of blindsight2$theta
+              size = 1e5,       # 100,000 of these,
+              prob = posterior, # choose more likely things more often
+              replace = TRUE    # can choose the same theta multiple times
+       ))
+```
+
+```{r echo=FALSE, dev = 'svg', fig.width = 5, fig.height = 2.5, fig.align='center', out.width="90%"}
+blindsight2.ps <- tibble(samples = posterior_sample)
+
+ggplot(blindsight2.ps) +
+  geom_histogram(mapping = aes(x = samples), binwidth = .01, color = "gray30", fill = "steelblue") + 
+  theme_minimal() +
+  labs(x = expression(theta^(i)))
+```
+
+
+.large[
+Now, use sample statistics to approximate posterior quantities
+]
+
+---
+
+## Calculating $P(\theta > 0.75)$
+
+
+```{r echo=FALSE, dev = 'svg', fig.width = 5.5, fig.height = 2.25, fig.align='center'}
+ps.density <- density(posterior_sample)
+
+p <- blindsight2.ps %>%
+  ggplot(aes(x = samples)) +
+  geom_density() +
+  labs(x = "posterior samples", y = "density") +
+  theme_minimal()
+
+ggdata <- ggplot_build(p)$data[[1]]
+
+p +
+  geom_area(data = ggdata %>% filter(x > 0.75), 
+            mapping = aes(x = x, y = y),
+            fill = "steelblue",
+            alpha = 0.5) 
+```
+
+.large[
+Estimate probabilities by the proportion of samples, $\theta^{(i)}$, that fall in the interval.
+
+
+```{r}
+mean(posterior_sample > 0.75)
+```
+]
+
+---
+
+## Calculating a 97% credible interval
+
+.content-box-blue[
+**Equal-tailed CI (i.e.percentile interval)**<br>
+Trim an equal proportion from each side of the sample
+]
+
+```{r echo=FALSE, dev = 'svg',  fig.width = 5.5, fig.height = 2.25, fig.align='center'}
+ci <- quantile(posterior_sample, probs = c(0.015, 0.985))
+
+p +
+  geom_area(data = ggdata %>% filter(x > ci[1] & x < ci[2]), 
+            mapping = aes(x = x, y = y),
+            fill = "steelblue",
+            alpha = 0.5) 
+```
+
+
+```{r}
+# using the quantile function like in Math 275
+quantile(posterior_sample, probs = c(0.015, 0.985))
+```
+
+
+---
+
+## Calculating a 97% HPDI
+
+
+.content-box-blue[
+**HPDI**: use the `HDInterval` package
+]
+
+```{r echo=FALSE, dev = 'svg',  fig.width = 5.5, fig.height = 2.25, fig.align='center'}
+hdpi <- HDInterval::hdi(posterior_sample, credMass = 0.97)
+
+p +
+  geom_area(data = ggdata %>% filter(x > hdpi[1] & x < hdpi[2]), 
+            mapping = aes(x = x, y = y),
+            fill = "steelblue",
+            alpha = 0.5) 
+```
+
+
+```{r}
+HDInterval::hdi(posterior_sample, credMass = 0.97)
+```
