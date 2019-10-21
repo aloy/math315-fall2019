@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>The Gibbs sampler</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# The Gibbs sampler
+### Math 315: Bayesian Statistics
+
+---
+
+class: clear, middle
+
+
+
+# Quick rundown of midterm eval results
+
+---
+
+
+# Long-run behavior of Markov chains
+
+.large[
+
+For .bold[irreducible, aperiodic] Markov chains, the fraction of time a chain will spend in each of its recurrent states is given by the .bold[stationary distribution] (a.k.a. steady state)
+
+&lt;br&gt;
+
+.content-box-blue[
+`\({\boldsymbol s} = (s_1, s_2, \ldots, s_n)\)` is a stationary distribution if
+
+`\({\boldsymbol s Q} = {\boldsymbol s}\)`  
+]
+
+
+]
+
+---
+
+# Important properties of Markov chains
+
+
+.large[
+
+.bolder[Theorem.] any irreducible Markov Chain
+
+1. A stationary distribution exists
+
+1. The stationary distribution is unique
+
+1. `\(s_i = 1 / r_i\)`, where `\(r_i\)` is the expected # of steps required to return to state *i*
+
+1. If `\({\boldsymbol Q}^m\)` is strictly positive for some `\(m\)`, then
+
+    `$$\lim_{n \to \infty}P(X_n = i) = s_i$$`
+
+.content-box-yellow[
+So, for an arbitrary probability vector `\(\boldsymbol t\)`, `\({\boldsymbol t Q}^n \to {\boldsymbol s}\)` as `\(n \to \infty\)`
+]
+]
+
+---
+class: inverse
+
+# Your turn: Monte Carlo sampling
+
+.Large[
+`\(\theta^{(1)}, \ldots, \theta^{(S)}\)` are samples from the posterior, `\(p(\boldsymbol \theta | {\bf Y})\)`
+
+Turn to your neighbor and discuss the following:
+
+- How would you estimate the posterior mean and standard deviation?
+
+- How would you calculate a 97% credible interval? 
+]
+
+---
+
+# Example
+.large[
+.bold[How did the support for GOP presidential candidates change between the 2012 and 2016 elections?]
+
+
+Variable | Description
+----------|------------------------------
+`fips`  | 5-digit code: 2-digit state code, by 3-digit county
+`area_name`     | name of the county
+`total_2012` | total votes cast in 2012
+`gop_2012`   | votes cast for GOP candidate in 2012
+`total_2016` | total votes cast in 2016
+`gop_2016`   | votes cast for GOP candidate in 2012
+`...`        | there are other variables...
+]
+
+Source: https://github.com/tonmcg/County_Level_Election_Results_12-16 &lt;br&gt; Note: Alaska is omitted from this data set
+
+
+
+---
+
+# Example 
+
+.large[
+Interest is in the .bold[percent change] in GOP support
+
+- `\(A_i = \#\)` GOP votes in 2012 in county `\(i = 1, \ldots, n\)`
+
+- `\(B_i = \#\)` GOP votes in 2016 in county `\(i = 1, \ldots, n\)`
+
+- `\(Y_i = 100(B_i/A_i - 1)\)`
+
+- `\(n=3,112\)`
+]
+
+
+
+```r
+library(dplyr)
+votes &lt;- mutate(
+  votes, 
+  gop_pct_2016 = gop_2016 / total_2016,
+  gop_pct_2012 = gop_2012 / total_2012,
+  pct_change   = 100 * (gop_pct_2016 / gop_pct_2012 - 1)
+)
+```
+
+---
+
+# Model
+
+.large[
+`\(Y_i = 100(B_i/A_i - 1)\)`, the percent change in support
+
+$$
+`\begin{align}
+Y_i | \mu, \sigma^2 &amp;\overset{\rm iid}{\sim} \mathcal{N}(\mu, \sigma^2) &amp; \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \phantom{text}\\
+\mu &amp; \sim \mathcal{N}(\mu_0, \sigma^2_0) &amp;\\
+\sigma^2 &amp; \sim {\rm InvGamma}(a, b) &amp;\\
+\mu &amp;\perp \sigma^2
+\end{align}`
+$$
+
+Let's use uninformative priors:
+
+$$
+`\begin{align}
+\mu_0 &amp;= 0 &amp; \qquad \qquad \qquad \qquad \qquad \qquad \phantom{text}\\
+\sigma^2_0 &amp;= 1000 &amp;\\
+a &amp;= 0.1 &amp;\\
+b &amp;= 0.1 &amp;\\
+\end{align}`
+$$
+
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+Turn to your neighbor and discuss how you could check whether this prior was reasonable and/or uninformative
+]
+
+---
+
+# Prior predictive check
+&lt;img src="15-gibbs_files/figure-html/unnamed-chunk-3-1.svg" width="60%" style="display: block; margin: auto;" /&gt;
+
+.large[
+If you don't think the priors induce a reasonable distribution on `\(Y\)`, then tweak the parameters (e.g. inflate `\(\sigma^2_0\)`)
+]
+
+
+---
+
+# Posterior
+
+.large[
+
+
+$$
+`\begin{align}
+\mu, \sigma^2 | {\bf Y} &amp;\propto \pi(\mu) \pi(\sigma^2) \cdot \prod_{i=1}^n f(y_i | \mu, \sigma^2)\\
+  &amp;\propto \exp \left[ - \dfrac{(\mu - \mu_0)^2}{2 \sigma^2_0} \right] \cdot \left(\sigma^2 \right)^{-a-1} \exp\left[ - \dfrac{b}{\sigma^2} \right] \cdot \\
+  &amp;\quad  \prod_{i=1}^n \left(\sigma^2 \right)^{-1/2} \exp\left[ - \dfrac{(y_i - \mu)^2}{2 \sigma^2} \right]
+\end{align}`
+$$
+
+.content-box-yellow[
+If we can sample from the posterior, we can avoid some tedious (and sometimes impossible) calculus!
+]
+
+]
+
+---
+
+# Road map
+
+.pull-left[
+.large[
+.bold[Where we've been]
+
+Grid (brute force) approximation
+
+- rather slow
+
+- scales horribly
+
+
+Bayesian CLT
+
+- fast
+
+- requires roughly normal posterior
+
+- doesn't scale well
+]
+]
+
+--
+
+.pull-right[
+.large[
+.bold[Where we're going]
+
+Markov Chain Monte Carlo = MCMC
+
+- Generate a Markov chain where the posterior is the stationary distribution 
+
+- Start from some initial guess `\(\theta^{(0)}\)` and let the chain run for a long time so that it reaches its stationary distribution
+]
+]
+
+---
+
+# Two-stage Gibbs sampler
+
+.large[
+
+.bold[Target:] samples from `\(p(\theta_1, \theta_2 | {\bf Y})\)`
+
+.bold[Algorithm:] 
+
+1. Set initial values for parameter values, `\(\boldsymbol{\theta}^{(0)} = \left(\theta^{(0)}_1, \theta^{(0)}_2 \right)\)`
+
+2. Draw `\(\theta_1^{(1)}\)` from `\(p(\theta_1 | \theta_2, {\bf Y})\)` 
+
+3. Draw `\(\theta_2^{(1)}\)` from `\(p(\theta_2 | \theta_1, {\bf Y})\)` 
+
+4. Repeat steps 2-3 `\(S\)` times
+
+After convergence, draws `\(\left( \theta_1^{(k)}, \theta_2^{(k)} \right)\)` are from the posterior distribution
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+
+In our example, `\(\boldsymbol{\theta} = (\mu, \sigma^2)\)`
+
+Discuss with your neighbor .bolder[how] you would find the following conditional posterior distributions from the joint posterior:
+
+1. `\(\mu | \sigma^2, {\bf Y}\)`
+
+1. `\(\sigma^2 | \mu, {\bf Y}\)`
+]
+
+---
+
+## Full conditional distributions
+
+
+$$
+`\begin{align}
+p(\sigma^2 | {\boldsymbol Y}, \mu) &amp;= \dfrac{f({\boldsymbol Y} | \sigma^2, \mu) \pi(\sigma^2) \pi(\mu)}{f({\boldsymbol Y})}\\
+&amp;\propto f({\boldsymbol Y} | \sigma^2, \mu) \pi(\sigma^2)\\
+&amp;\propto \left[ \prod_{i=1}^n \left(\sigma^2 \right)^{-1/2} \exp\left( - \dfrac{(y_i - \mu)^2}{2 \sigma^2} \right) \right] \left[\left(\sigma^2 \right)^{-a-1} \exp\left( - \dfrac{b}{\sigma^2} \right) \right]\\
+&amp;= \left[ \left(\sigma^2 \right)^{-n/2} \exp\left(- \frac{{\rm SSE}}{2 \sigma^2} \right) \right]  \left[\left(\sigma^2 \right)^{-a-1} \exp\left( - \dfrac{b}{\sigma^2} \right) \right]\\
+&amp;= \left(\sigma^2 \right)^{-\left(\frac{n}{2} + a \right) - 1} \exp\left( - \frac{{\rm SSE/2 + b}}{ \sigma^2} \right) 
+\end{align}`
+$$
+
+&lt;br&gt;
+
+.large[
+.bold[
+Is this a distribution we know?
+]
+]
+
+---
+
+
+
+$$
+`\begin{align}
+p(\mu | {\boldsymbol Y}, \sigma^2) &amp;= \dfrac{f({\boldsymbol Y} | \sigma^2, \mu) \pi(\sigma^2) \pi(\mu)}{f({\boldsymbol Y})}\\
+&amp;\propto f({\boldsymbol Y} | \sigma^2, \mu) \pi(\mu)\\
+&amp;\propto \exp\left[ - \dfrac{ \sum(y_i - \mu)^2}{2 \sigma^2} \right] \exp\left[ - \dfrac{(\mu - \mu_0)^2}{2 \sigma_0^2} \right]\\
+&amp;= \exp\left[ -\frac{1}{2} \left( \frac{\sum y_i^2}{\sigma^2} - 2 \frac{\sum y_i}{\sigma^2} \mu + \frac{n}{\sigma^2} \mu^2 + \frac{\mu^2}{\sigma^2_0} - 2\frac{\mu_0}{\sigma_0^2} \mu  + \frac{\mu^2_0}{\sigma^2_0} \right) \right]\\
+&amp;\propto \exp \left[  -\frac{1}{2} \left( -2 \left\{ \frac{n \bar{y}}{\sigma^2} + \frac{\mu_0}{\sigma^2_0}  \right\} \mu + \left\{  \frac{n}{\sigma^2_0}  + \frac{\mu_0}{\sigma^2_0} \right\} \mu^2 \right) \right]\\
+&amp;= \exp \left[ -\frac{1}{2} \left( -2A\mu + B \mu^2 \right) \right]\\
+&amp;= \exp \left[ -\frac{B}{2} \left( -2\frac{A}{B}\mu +  \mu^2 \right) \right]\\
+&amp;\propto \exp \left[ -\frac{B}{2} \left(\mu - \frac{A}{B} \right)^2 \right]\\
+\end{align}`
+$$
+
+.large[
+.bold[
+Is this a distribution we know?
+]
+]
+
+---
+
+# Getting ready to sample
+
+
+```r
+# Data
+y &lt;- na.omit(votes$pct_change)
+n &lt;- length(y)
+
+# Prior specification
+mu0 &lt;- 0
+s20 &lt;- 1000
+a   &lt;- 0.1
+b   &lt;- 0.1
+
+# Initial parameter values
+mu &lt;- mean(y)
+s2 &lt;- var(y)
+
+
+# Create empty S x p matrix for MCMC draws
+S                    &lt;- 10000
+mcmc.draws           &lt;- matrix(NA, nrow = S, ncol = 2)
+colnames(mcmc.draws) &lt;- c("mu", "sigma2")
+```
+
+---
+
+# Gibbs sampler
+
+
+```r
+for(i in 1:S) {
+  
+  # sample from mu | s2, y
+  A   &lt;- sum(y) / s2 + mu0 / s20
+  B   &lt;- n / s2 + 1 / s20
+  mu  &lt;- rnorm(1, A/B, 1/sqrt(B))
+  
+  # sample from se | mu, y
+  shape  &lt;- n / 2 + a
+  scale  &lt;- (sum((y - mu)^2) + b) / 2 
+  s2     &lt;- MCMCpack::rinvgamma(1, shape, scale)
+  
+  # Store the draws
+  mcmc.draws[i, ] &lt;- c(mu, s2)
+}
+```
+
+---
+
+# Did the chain converge?
+
+&lt;img src="15-gibbs_files/figure-html/unnamed-chunk-6-1.svg" width="100%" /&gt;
+
+.large[Don't hesitate to snoop around with different `xlim`!]
+
+---
+
+# Did the chain converge?
+
+&lt;img src="15-gibbs_files/figure-html/unnamed-chunk-7-1.svg" width="100%" /&gt;
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+Take a look at the four trace plots provided as an example. For each, determine
+
+1. whether the chain converged
+
+2. roughly how many iterations it took to converge
+]
+
+---
+
+class:inverse
+
+&lt;img src="figs/15-converge-longer.png" width="70%" /&gt;
+
+.Large[
+1. Did the chain converge?
+
+2. If so, how many iterations did it take?
+]
+
+---
+
+class:inverse
+
+&lt;img src="figs/15-converge-short.png" width="70%" /&gt;
+
+.Large[
+1. Did the chain converge?
+
+2. If so, how many iterations did it take?
+]
+
+---
+
+class:inverse
+
+&lt;img src="figs/15-no-converge.png" width="70%" /&gt;
+
+.Large[
+1. Did the chain converge?
+
+2. If so, how many iterations did it take?
+]
+
+---
+
+class:inverse
+
+&lt;img src="figs/15-questionable-converge.png" width="70%" /&gt;
+
+.Large[
+1. Did the chain converge?
+
+2. If so, how many iterations did it take?
+]
+
+---
+
+# Posterior analysis
+
+.large[
+Toss out samples prior to convergence (this is called the *burn in* period)
+
+Draw inferences using the remaining MCMC samples just like we have all term
+]
+
+
+```r
+mcmc.draws &lt;- mcmc.draws[-c(1:100),]
+```
+
+
+.pull-left[
+&lt;img src="15-gibbs_files/figure-html/unnamed-chunk-13-1.svg" width="75%" /&gt;
+]
+
+.pull-right[
+&lt;img src="15-gibbs_files/figure-html/unnamed-chunk-14-1.svg" width="75%" /&gt;
+]
+
+---
+
+# Posterior analysis
+
+.pull-left[
+&lt;img src="15-gibbs_files/figure-html/unnamed-chunk-15-1.svg" width="95%" /&gt;
+]
+
+.pull-right[
+&lt;img src="15-gibbs_files/figure-html/unnamed-chunk-16-1.svg" width="95%" /&gt;
+]
+
+.large[
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt;   &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Mean &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; SD &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Q025 &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Q975 &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; mu &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6.69 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.19 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6.31 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 7.06 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sigma^2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 110.07 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.79 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 104.78 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 115.62 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+]
+
+---
+
+# Build your intuition
+
+&lt;img src="figs/15-gibbs-anim.png" width="1245" /&gt;
+
+
+.footnotesize[https://chi-feng.github.io/mcmc-demo/app.html?algorithm=GibbsSampling&amp;target=standard]
+
+---
+
+# *p*-stage Gibbs sampler
+
+.large[
+
+.bold[Target:] samples from `\(p(\theta_1, \theta_2, \ldots, \theta_p | {\bf Y})\)`
+
+.bold[Algorithm:] 
+
+*1.* Set initial values for parameter values, `\(\boldsymbol{\theta}^{(0)} = \left(\theta^{(0)}_1, \theta^{(0)}_2, \ldots, \theta_p^{(0)} \right)\)`
+
+*2.* Draw `\(\theta_1^{(1)}\)` from `\(p(\theta_1 | \theta_2,\ldots, \theta_p {\bf Y})\)` 
+
+*3.* Draw `\(\theta_2^{(1)}\)` from `\(p(\theta_2 | \theta_1, \theta_3,\ldots, \theta_p {\bf Y})\)` 
+
+...
+
+*p.* Draw `\(\theta_2^{(1)}\)` from `\(p(\theta_p | \theta_1,\ldots, \theta_{p-1} {\bf Y})\)` 
+
+Repeat steps *2-p* `\(S\)` times
+
+
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
