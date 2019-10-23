@@ -52,7 +52,7 @@ ${\boldsymbol s Q} = {\boldsymbol s}$
 
 .large[
 
-.bolder[Theorem.] any irreducible Markov Chain
+.bolder[Theorem.] For any irreducible Markov Chain
 
 1. A stationary distribution exists
 
@@ -379,7 +379,7 @@ for(i in 1:S) {
   
   # sample from se | mu, y
   shape  <- n / 2 + a
-  scale  <- (sum((y - mu)^2) + b) / 2 
+  scale  <- (sum((y - mu)^2) / 2) + b
   s2     <- MCMCpack::rinvgamma(1, shape, scale)
   
   # Store the draws

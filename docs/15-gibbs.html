@@ -50,7 +50,7 @@ For .bold[irreducible, aperiodic] Markov chains, the fraction of time a chain wi
 
 .large[
 
-.bolder[Theorem.] any irreducible Markov Chain
+.bolder[Theorem.] For any irreducible Markov Chain
 
 1. A stationary distribution exists
 
@@ -365,7 +365,7 @@ for(i in 1:S) {
   
   # sample from se | mu, y
   shape  &lt;- n / 2 + a
-  scale  &lt;- (sum((y - mu)^2) + b) / 2 
+  scale  &lt;- (sum((y - mu)^2) / 2) + b
   s2     &lt;- MCMCpack::rinvgamma(1, shape, scale)
   
   # Store the draws
@@ -500,15 +500,15 @@ mcmc.draws &lt;- mcmc.draws[-c(1:100),]
    &lt;td style="text-align:left;"&gt; mu &lt;/td&gt;
    &lt;td style="text-align:right;"&gt; 6.69 &lt;/td&gt;
    &lt;td style="text-align:right;"&gt; 0.19 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 6.31 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 7.06 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6.32 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 7.05 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; sigma^2 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 110.07 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 110.06 &lt;/td&gt;
    &lt;td style="text-align:right;"&gt; 2.79 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 104.78 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 115.62 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 104.73 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 115.70 &lt;/td&gt;
   &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
