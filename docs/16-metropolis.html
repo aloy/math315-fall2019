@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>The Metropolis-Hastings algorithm</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# The Metropolis-Hastings algorithm
+### Math 315: Bayesian Statistics
+
+---
+
+
+
+
+# Example
+
+.large[
+- FAA and USAF were interested in estimating the failure probability for new rockets launched by companies with limited experience
+
+- Goal is to assess prelaunch risk. 
+
+- Failures have significant on 
+
+    + public safety
+    
+    +  aerospace manufacturers avility to develop and field new rocket systems.
+
+- Johnson et al. (2005) data from 1980-2002
+
+    + 11 launches: 3 successes, 8 failures
+]
+
+---
+
+# Model
+
+.large[
+`\(Y= \#\)` successful launches
+
+.bold[Likelihood:]
+Assuming trials are iid `\({\rm Bernoulli} (\theta)\)`
+
+`$$Y \sim {\rm Binomial}(n=11, \theta)$$`
+
+.bold[Prior:] Elicitation leads to uniform on (0.1, 0.9)
+
+.bold[Posterior:]
+
+`$$p(\theta | y) \propto \begin{cases}
+\theta^3 (1-\theta)^8 &amp; \text{if } 0.1 &lt; \theta &lt; 0.9\\
+0 &amp; \text{otherwise.}\end{cases}$$`
+
+&lt;br&gt;
+
+.content-box-yellow[**Is the posterior a density we know?**]
+]
+
+---
+
+# Metropolis sampling
+
+.large[
+- In Gibbs sampling each parameter is updated by sampling
+from its full conditional distribution
+
+- This is possible with conjugate priors
+
+-  If the prior is not conjugate it is not obvious how
+to make a draw from the full conditional
+
+- Gibbs isn't helpful in one-parameter settings
+]
+
+---
+
+# Metropolis algorithm
+
+1. Start with the current value `\(\theta^{(i)}\)`
+
+1. Propose a *candidate draw* `\(\theta^c\)` from a "proposal distribution"
+
+  + `\(\theta^c \sim {\rm Unif}(0.1, 0.9)\)`
+  + `\(\theta^c \sim \mathcal{N}(\theta^{(i)}, s^2)\)`
+
+1. Evaluate the (unnormalized) posterior at the current value: `\(p(\theta^{(i)} | {\bf y})\)`.
+
+1. Evaluate the (unnormalized) posterior at the candidate: `\(p(\theta^{c} | {\bf y})\)`.
+
+1. Accept candidate with probability `\(R = \min \left\{ p(\theta^{c} | {\bf y}) \big/ p(\theta^{(i)} |{\bf y}), 1 \right\}\)`.
+
+    * If you accept, set `\(\theta^{(i+1)} = \theta^{c}\)`,
+    
+    * Otherwise, set `\(\theta^{(i+1)} = \theta^{(i)}\)`.
+
+
+---
+
+#Set up
+
+
+```r
+# Data
+y &lt;- 3
+n &lt;- 11
+
+# Initial parameter value
+theta  &lt;- 0.5
+
+# Create empty vector for theta draws
+S           &lt;- 1000
+mcmc.draws  &lt;- numeric(S)
+
+# Acceptance rate tracking
+att &lt;- 0  # attempts
+acc &lt;- 0  # acceptances
+
+# Posterior function
+posterior &lt;- function(.theta, y = 3, n = 11) {
+  .theta^y * (1 - .theta)^(n - y)
+}
+```
+
+
+---
+
+# Metropolis sampling
+
+
+
+
+
+```r
+for(s in 1:S){
+  # increase att
+  att &lt;- att + 1
+  
+  # Draw a candidate theta
+  candidate &lt;- runif(1, .1, .9) 
+  
+  # Calc acceptance probability
+  R &lt;- posterior(candidate) / posterior(theta)
+  
+  # Accept/reject candidate with prob R
+  if(runif(1) &lt; R) {
+    theta  &lt;- candidate
+    acc &lt;- acc + 1
+  }
+  
+  # Store the result
+  mcmc.draws[s] &lt;- theta
+}
+```
+
+.small[
+This example is called an *independence Metropolis sampler* since the jump distribution doesn't depend on `\(\theta^{(i)}\)`.
+]
+
+---
+class: inverse
+# Your turn
+
+&lt;img src="16-metropolis_files/figure-html/unnamed-chunk-4-1.svg" width="100%" /&gt;
+
+.Large[
+.bold[Did the chain converge?]
+]
+
+---
+class: inverse
+
+.Large[Now suppose we observed 300 successes and 800 failures and ran our independence Metropolis sampler]
+
+&lt;img src="16-metropolis_files/figure-html/unnamed-chunk-5-1.svg" width="100%" /&gt;
+
+.Large[
+.bold[
+Are you comfortable with this chain?
+]
+]
+
+---
+
+# Random walk Metropolis algorithm
+
+.large[
+- An independence sampler works well if the proposal density approximates the posterior
+
+- Alternative is to use a symmetric proposal density centered at the current parameter value
+
+    + e.g. `\(\theta^c \sim \mathcal{N}(\theta^{(i)}, s^2)\)`
+
+- Allows us to approximate more complicated posteriors
+]
+
+---
+
+# Example
+
+.large[
+- Engineers needed to understand how long machines can run before replacing oil in a factory
+
+- Collected viscosity breakdown times (in thousands of hours) for 50 samples
+]
+
+&lt;img src="16-metropolis_files/figure-html/unnamed-chunk-6-1.svg" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Model
+
+.large[
+`\(Y_i= \log({\rm time}_i)\)` 
+
+.bold[Likelihood:] `\(Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)\)`
+
+&lt;br&gt;
+
+.bold[Noninformative prior:] `\(\pi(\mu) \propto 1\)`
+
+&lt;br&gt;
+
+.bold[Posterior:]
+
+`$$p(\mu | \boldsymbol{y}) \propto \exp \left[ \sum_{i=1}^n -\frac{1}{2 (.4)} (y_i - \mu)^2\right]$$`
+]
+
+
+---
+
+
+# Random walk Metropolis algorithm
+
+.large[
+1. Start with the current values: `\(\mu^{(i)}\)`
+
+1. Propose a `\(\mu^c\)` from `\(\mathcal{N}(\mu^{(i)}, s^2_{1})\)`
+
+1. Compute `\(R = \min \left( p(\mu^{c} | \sigma^2, {\bf y}) \big/ p(\mu^{(i)} |\sigma^2, {\bf y}), 1 \right)\)`
+
+1. Accept `\(\mu^c\)` with probability `\(R\)`. 
+
+    + If accepted, `\(\mu^{(i+1)} = \mu^{c}\)`; 
+    
+    + else `\(\mu^{(i+1)} = \mu^{(i)}\)`
+
+]
+
+
+---
+
+# Set up
+
+
+```r
+# Data
+y &lt;- log(breakdown[,1])
+n &lt;- length(y)
+
+# Initial parameter value
+theta   &lt;- 1
+
+# Create empty S x p matrix for MCMC draws
+S          &lt;- 10000
+mcmc.draws &lt;- numeric(S)
+
+# Candidate standard devations
+can_sd &lt;- .25
+
+# Acceptance rate tracking
+att &lt;- 0  # attempts
+acc &lt;- 0  # accepts
+```
+
+---
+
+# Metropolis sampling
+
+
+```r
+for(s in 1:S){
+  # Current parameter value
+  can &lt;- theta
+  
+  # mu-step
+  att &lt;- att + 1
+  can &lt;- rnorm(1, theta, sd = can_sd)
+  R &lt;- exp(-sum((y - can)^2) / (2 * .4)) / 
+    exp(-sum((y - theta)^2) / (2 * .4))
+  
+  if(runif(1) &lt;= R) {
+    theta  &lt;- can
+    acc &lt;- acc + 1
+  }
+  
+  # Store results
+  mcmc.draws[s] &lt;- theta
+}
+```
+
+---
+
+# Convergence check
+
+&lt;img src="16-metropolis_files/figure-html/unnamed-chunk-9-1.svg" width="100%" /&gt;
+
+---
+
+# Tuning a jump distribution
+
+.large[
+.bold[You must set the variance of the proposal distribution]
+
+- Experiment to get it set right
+
+- Optimal acceptance rate (from theory) is between 25% and 50%. Gets lower with higher dimensional problems
+]
+
+---
+
+# Tuning a jump distribution
+
+&lt;img src="16-metropolis_files/figure-html/unnamed-chunk-10-1.svg" width="100%" /&gt;
+
+
+- Variance too small: takes long time to explore parameter space
+    
+- Variance too large: jumps to extremes are less likely to be accepted. Stays in the same place too long.
+
+
+---
+class: inverse, center, middle
+
+#The Metropolis-Hastings algorithm
+
+
+---
+
+# More realistic model
+
+.large[
+`\(Y_i= \log({\rm time}_i)\)` 
+
+.bold[Likelihood:] `\(Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2)\)`
+
+&lt;br&gt;
+
+.bold[Noninformative prior:] `\(\pi(\mu, \sigma^2) \propto 1 / \sigma^2\)`
+
+&lt;br&gt;
+
+.bold[Posterior:]
+
+`$$p(\mu, \sigma^2 | \boldsymbol{y}) \propto \left(\sigma^2\right)^{-\frac{n}{2}-1} \exp \left[ \sum_{i=1}^n -\frac{1}{2\sigma^2} (y_i - \mu)^2\right]$$`
+]
+
+---
+
+# Choosing proposal distributions
+
+.large[
+`\(\mu \in \mathbb{R}\)`, so `\(\mathcal{N}(\mu^{(i)}, s^2_{1})\)` is reasonable
+
+
+`\(\sigma^2 \in (0, \infty)\)`
+
+- `\(\log(\sigma^2) \in \mathbb{R}\)`
+
+- `\(\log(\sigma^{2c}) = \log(\sigma^{2(i)}) + \varepsilon\)` where `\(\varepsilon \sim \mathcal{N}(0, s^2_2)\)`
+
+  `\(\Longrightarrow \sigma^{2c} = \sigma^{2(i)} e^{\varepsilon}\)`
+
+
+  So `\(q\left(\sigma^{2c} | \sigma^{2(i)} \right) = \dfrac{1}{\sigma^{2c}} \cdot \dfrac{1}{\sqrt{2 \pi  s_2^2}} \cdot  \exp \left\{ -\dfrac{1}{2s^2_2} \left[ \log(\sigma^{2c}) - \log(\sigma^{2(i)})\right]^2 \right\}\)`
+&lt;br&gt;
+
+.content-box-yellow[The resulting proposal density isn't symmetric!]
+
+]
+
+---
+
+# Metropolis-Hastings algorithm
+
+.large[
+- Generalizes Metropolis sampling to allow for asymmetric candidate distributions
+
+- Proceeds exactly like Metropolis except the acceptance probability is
+
+    `$$R = \min \left\{ \dfrac{p(\theta^{c} | {\rm rest}) / q( \theta^{c} | \theta^{(i)})}{p(\theta^{(i)} | {\rm rest}) / q(\theta^{(i)} | \theta^c )} ,\ 1\right\}$$`
+    where `\(q(\cdot)\)` is the proposal density
+
+&lt;br&gt;
+    
+
+  .content-box-yellow[Why is this change necessary?]
+]
+
+
+---
+
+# Metropolis-Hastings algorithm
+
+.large[
+1. Start with the current values: `\(\mu^{(i)}\)` and `\(\sigma^{2(i)}\)`
+
+1. Propose a `\(\mu^c\)` from `\(\mathcal{N}(\mu^{(i)}, s^2_{1})\)`
+
+1. Compute `\(R = \min \left\{ p(\mu^{c} | \sigma^2, {\bf y}) \big/ p(\mu^{(i)} |\sigma^2, {\bf y}), 1 \right\}\)`
+
+1. Accept `\(\mu^c\)` with probability `\(R\)`. 
+
+1. Propose a `\(\sigma^{2c} = \sigma^{2(i)} e^{\varepsilon}\)` where `\(\varepsilon \sim \mathcal{N}(0, s^2_2)\)`
+
+1. Compute `\(R = \min \left\{ \dfrac{p(\sigma^{2c} | {\rm rest}) / q( \sigma^{2c} | \sigma^{2(i)})}{p(\theta^{(i)} | {\rm rest}) / q(\sigma^{2(i)} | \theta^c )} ,\ 1\right\}\)`
+
+1. Accept `\(\sigma^{2c}\)` with probability `\(R\)`. 
+]
+
+    
+---
+class: clear
+
+
+```r
+# Data
+y &lt;- log(breakdown[,1])
+n &lt;- length(y)
+
+# Initial parameter values
+theta &lt;- c(0, 0.5)
+
+# Create empty S x p matrix for MCMC draws
+S                    &lt;- 5000
+mcmc.draws           &lt;- matrix(NA, nrow = S, ncol = 2)
+colnames(mcmc.draws) &lt;- c("mu", "sig2")
+
+# Candidate standard devations
+s1 &lt;- 0.3
+s2 &lt;- .8
+
+# Acceptance rate tracking
+att   &lt;- rep(0, 2)  # attempts
+acc   &lt;- rep(0, 2)  # accepts
+```
+
+---
+class: clear
+
+
+```r
+for(i in 1:S){
+  att &lt;- att + 1
+  
+  # mu-step
+  mu.can &lt;- rnorm(n = 1, mean = theta[1], sd = s1) # candidate
+  R &lt;- exp(-sum((y - mu.can)^2) / (2*theta[2])) / 
+    exp(-sum((y - theta[1])^2) / (2*theta[2]))     # accept prob.
+  
+  # Accept/reject mu.can
+  u &lt;- runif(1) &lt;= R
+  theta[1] &lt;- mu.can * (u == 1) + theta[1] * (u == 0)
+  acc[1] &lt;- acc[1] + u
+  
+  # sigma2-step
+  epsilon &lt;- rnorm(1, 0, sd = s2)
+  var.can &lt;- theta[2] * exp(epsilon)
+  R &lt;- (var.can^(-n/2 - 1)*exp(-sum((y-theta[1])^2)/(2*var.can)))/
+    (theta[2]^(-n/2 - 1)*exp(-sum((y-theta[1])^2)/(2*theta[2])))
+  
+  # Accept/reject var.can
+  u &lt;- runif(1) &lt;= R
+  theta[2] = var.can * (u==1) + theta[2] * (u==0)
+  acc[2] &lt;- acc[2] + u
+  
+  # Store the draws
+  mcmc.draws[i,] = theta
+}
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

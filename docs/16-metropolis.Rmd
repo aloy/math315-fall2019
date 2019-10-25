@@ -1,0 +1,598 @@
+---
+title: "The Metropolis-Hastings algorithm"
+author: "Math 315: Bayesian Statistics"
+header-includes:
+   - \usepackage{mathtools}
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(gridExtra)
+library(ggplot2)
+library(ggthemes)
+library(LearnBayes)
+
+launches <- read.table("https://www4.stat.ncsu.edu/~wilson/BR/table21.txt", header = TRUE)
+```
+
+# Example
+
+.large[
+- FAA and USAF were interested in estimating the failure probability for new rockets launched by companies with limited experience
+
+- Goal is to assess prelaunch risk. 
+
+- Failures have significant on 
+
+    + public safety
+    
+    +  aerospace manufacturers avility to develop and field new rocket systems.
+
+- Johnson et al. (2005) data from 1980-2002
+
+    + 11 launches: 3 successes, 8 failures
+]
+
+---
+
+# Model
+
+.large[
+$Y= \#$ successful launches
+
+.bold[Likelihood:]
+Assuming trials are iid ${\rm Bernoulli} (\theta)$
+
+$$Y \sim {\rm Binomial}(n=11, \theta)$$
+
+.bold[Prior:] Elicitation leads to uniform on (0.1, 0.9)
+
+.bold[Posterior:]
+
+$$p(\theta | y) \propto \begin{cases}
+\theta^3 (1-\theta)^8 & \text{if } 0.1 < \theta < 0.9\\
+0 & \text{otherwise.}\end{cases}$$
+
+<br>
+
+.content-box-yellow[**Is the posterior a density we know?**]
+]
+
+---
+
+# Metropolis sampling
+
+.large[
+- In Gibbs sampling each parameter is updated by sampling
+from its full conditional distribution
+
+- This is possible with conjugate priors
+
+-  If the prior is not conjugate it is not obvious how
+to make a draw from the full conditional
+
+- Gibbs isn't helpful in one-parameter settings
+]
+
+---
+
+# Metropolis algorithm
+
+1. Start with the current value $\theta^{(i)}$
+
+1. Propose a *candidate draw* $\theta^c$ from a "proposal distribution"
+
+  + $\theta^c \sim {\rm Unif}(0.1, 0.9)$
+  + $\theta^c \sim \mathcal{N}(\theta^{(i)}, s^2)$
+
+1. Evaluate the (unnormalized) posterior at the current value: $p(\theta^{(i)} | {\bf y})$.
+
+1. Evaluate the (unnormalized) posterior at the candidate: $p(\theta^{c} | {\bf y})$.
+
+1. Accept candidate with probability $R = \min \left\{ p(\theta^{c} | {\bf y}) \big/ p(\theta^{(i)} |{\bf y}), 1 \right\}$.
+
+    * If you accept, set $\theta^{(i+1)} = \theta^{c}$,
+    
+    * Otherwise, set $\theta^{(i+1)} = \theta^{(i)}$.
+
+
+---
+
+#Set up
+
+```{r}
+# Data
+y <- 3
+n <- 11
+
+# Initial parameter value
+theta  <- 0.5
+
+# Create empty vector for theta draws
+S           <- 1000
+mcmc.draws  <- numeric(S)
+
+# Acceptance rate tracking
+att <- 0  # attempts
+acc <- 0  # acceptances
+
+# Posterior function
+posterior <- function(.theta, y = 3, n = 11) {
+  .theta^y * (1 - .theta)^(n - y)
+}
+```
+
+
+---
+
+# Metropolis sampling
+
+```{r echo=FALSE}
+set.seed(57948)
+```
+
+
+```{r }
+for(s in 1:S){
+  # increase att
+  att <- att + 1
+  
+  # Draw a candidate theta
+  candidate <- runif(1, .1, .9) 
+  
+  # Calc acceptance probability
+  R <- posterior(candidate) / posterior(theta)
+  
+  # Accept/reject candidate with prob R
+  if(runif(1) < R) {
+    theta  <- candidate
+    acc <- acc + 1
+  }
+  
+  # Store the result
+  mcmc.draws[s] <- theta
+}
+```
+
+.small[
+This example is called an *independence Metropolis sampler* since the jump distribution doesn't depend on $\theta^{(i)}$.
+]
+
+---
+class: inverse
+# Your turn
+
+```{r echo=FALSE, fig.height = 3, fig.width = 6, out.width = "100%"}
+ggplot() +
+  geom_line(aes(x = seq_along(mcmc.draws), y = mcmc.draws)) +
+  labs(y = bquote(theta), x = "Iteration", caption = paste("Acceptance rate:", acc/att)) +
+  theme_bw()
+```
+
+.Large[
+.bold[Did the chain converge?]
+]
+
+---
+class: inverse
+
+.Large[Now suppose we observed 300 successes and 800 failures and ran our independence Metropolis sampler]
+
+```{r echo=FALSE, fig.height = 3, fig.width = 6, out.width = "100%"}
+# Data
+y <- 300
+n <- 1100
+
+# Initial parameter value
+theta  <- 0.5
+
+# Create empty vector for theta draws
+S           <- 1000
+mcmc.draws  <- numeric(S)
+
+# Acceptance rate tracking
+att <- 0  # attempts
+acc <- 0  # acceptances
+
+for(s in 1:S){
+  # increase att
+  att <- att + 1
+  
+  # Draw a candidate theta
+  candidate <- runif(1, .1, .9) 
+  
+  # Calc acceptance probability
+  R <- posterior(candidate, y, n) / posterior(theta, y, n)
+  
+  # Accept/reject candidate with prob R
+  if(runif(1) < R) {
+    theta  <- candidate
+    acc <- acc + 1
+  }
+  
+  # Store the result
+  mcmc.draws[s] <- theta
+}
+
+ggplot() +
+  geom_line(aes(x = seq_along(mcmc.draws), y = mcmc.draws)) +
+  labs(y = bquote(theta), x = "Iteration", caption = paste("Acceptance rate:", acc/att)) +
+  theme_bw()
+```
+
+.Large[
+.bold[
+Are you comfortable with this chain?
+]
+]
+
+---
+
+# Random walk Metropolis algorithm
+
+.large[
+- An independence sampler works well if the proposal density approximates the posterior
+
+- Alternative is to use a symmetric proposal density centered at the current parameter value
+
+    + e.g. $\theta^c \sim \mathcal{N}(\theta^{(i)}, s^2)$
+
+- Allows us to approximate more complicated posteriors
+]
+
+---
+
+# Example
+
+.large[
+- Engineers needed to understand how long machines can run before replacing oil in a factory
+
+- Collected viscosity breakdown times (in thousands of hours) for 50 samples
+]
+
+```{r echo=FALSE, fig.height = 3, fig.width = 4, fig.align='center', out.width = "60%"}
+breakdown <- read.csv("https://www4.stat.ncsu.edu/~wilson/BR/table23.txt")
+ggplot(data = breakdown) +
+  geom_density(aes(x=Time), fill = "steelblue", alpha = 0.6) +
+  labs(x = "Breakdown time") +
+  theme_bw()
+```
+
+---
+
+# Model
+
+.large[
+$Y_i= \log({\rm time}_i)$ 
+
+.bold[Likelihood:] $Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)$
+
+<br>
+
+.bold[Noninformative prior:] $\pi(\mu) \propto 1$
+
+<br>
+
+.bold[Posterior:]
+
+$$p(\mu | \boldsymbol{y}) \propto \exp \left[ \sum_{i=1}^n -\frac{1}{2 (.4)} (y_i - \mu)^2\right]$$
+]
+
+
+---
+
+
+# Random walk Metropolis algorithm
+
+.large[
+1. Start with the current values: $\mu^{(i)}$
+
+1. Propose a $\mu^c$ from $\mathcal{N}(\mu^{(i)}, s^2_{1})$
+
+1. Compute $R = \min \left( p(\mu^{c} | \sigma^2, {\bf y}) \big/ p(\mu^{(i)} |\sigma^2, {\bf y}), 1 \right)$
+
+1. Accept $\mu^c$ with probability $R$. 
+
+    + If accepted, $\mu^{(i+1)} = \mu^{c}$; 
+    
+    + else $\mu^{(i+1)} = \mu^{(i)}$
+
+]
+
+
+---
+
+# Set up
+
+```{r }
+# Data
+y <- log(breakdown[,1])
+n <- length(y)
+
+# Initial parameter value
+theta   <- 1
+
+# Create empty S x p matrix for MCMC draws
+S          <- 10000
+mcmc.draws <- numeric(S)
+
+# Candidate standard devations
+can_sd <- .25
+
+# Acceptance rate tracking
+att <- 0  # attempts
+acc <- 0  # accepts
+```
+
+---
+
+# Metropolis sampling
+
+```{r}
+for(s in 1:S){
+  # Current parameter value
+  can <- theta
+  
+  # mu-step
+  att <- att + 1
+  can <- rnorm(1, theta, sd = can_sd)
+  R <- exp(-sum((y - can)^2) / (2 * .4)) / 
+    exp(-sum((y - theta)^2) / (2 * .4))
+  
+  if(runif(1) <= R) {
+    theta  <- can
+    acc <- acc + 1
+  }
+  
+  # Store results
+  mcmc.draws[s] <- theta
+}
+```
+
+---
+
+# Convergence check
+
+```{r echo=FALSE, fig.height = 3, fig.width = 6, out.width = "100%"}
+ggplot() +
+  geom_line(aes(x = seq_along(mcmc.draws), y = mcmc.draws)) +
+  labs(y = bquote(mu), x = "Iteration", caption = paste("Acceptance rate:", acc/att)) +
+  theme_bw()
+```
+
+---
+
+# Tuning a jump distribution
+
+.large[
+.bold[You must set the variance of the proposal distribution]
+
+- Experiment to get it set right
+
+- Optimal acceptance rate (from theory) is between 25% and 50%. Gets lower with higher dimensional problems
+]
+
+---
+
+# Tuning a jump distribution
+
+```{r echo=FALSE, fig.height = 3, fig.width = 6, out.width = "100%"}
+# Chain for too small V
+theta <- 1
+tune_small <- numeric(S)
+acc_small <- 0
+att_small <- 0
+for(s in 1:S){
+  # Current parameter value
+  can <- theta
+  
+  # mu-step
+  att_small <- att_small + 1
+  can <- rnorm(1, theta, sd = 0.025)
+  R <- exp(-sum((y - can)^2) / (2 * .4)) / 
+    exp(-sum((y - theta)^2) / (2 * .4))
+  
+  if(runif(1) <= R) {
+    theta  <- can
+    acc_small <- acc_small + 1
+  }
+  
+  # Store results
+  tune_small[s] <- theta
+}
+
+
+# Chain for too big V
+theta <- 1
+tune_big <- numeric(S)
+acc_big <- 0
+att_big <- 0
+for(s in 1:S){
+  # Current parameter value
+  can <- theta
+  
+  # mu-step
+  att_big <- att_big + 1
+  can <- rnorm(1, theta, sd = 5)
+  R <- exp(-sum((y - can)^2) / (2 * .4)) / 
+    exp(-sum((y - theta)^2) / (2 * .4))
+  
+  if(runif(1) <= R) {
+    theta  <- can
+    acc_big <- acc_big + 1
+  }
+  
+  # Store results
+  tune_big[s] <- theta
+}
+
+ggplot(data = NULL, aes(x = (1:S)[1:1000])) +
+  geom_line(aes(y = tune_small[1:1000], color = "0.025")) +
+  geom_line(aes(y = tune_big[1:1000], color = "5")) +
+  theme_bw() +
+  labs(x = "Iteration", y = bquote(mu)) +
+  scale_color_colorblind("Variance")
+```
+
+
+- Variance too small: takes long time to explore parameter space
+    
+- Variance too large: jumps to extremes are less likely to be accepted. Stays in the same place too long.
+
+
+---
+class: inverse, center, middle
+
+#The Metropolis-Hastings algorithm
+
+
+---
+
+# More realistic model
+
+.large[
+$Y_i= \log({\rm time}_i)$ 
+
+.bold[Likelihood:] $Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2)$
+
+<br>
+
+.bold[Noninformative prior:] $\pi(\mu, \sigma^2) \propto 1 / \sigma^2$
+
+<br>
+
+.bold[Posterior:]
+
+$$p(\mu, \sigma^2 | \boldsymbol{y}) \propto \left(\sigma^2\right)^{-\frac{n}{2}-1} \exp \left[ \sum_{i=1}^n -\frac{1}{2\sigma^2} (y_i - \mu)^2\right]$$
+]
+
+---
+
+# Choosing proposal distributions
+
+.large[
+$\mu \in \mathbb{R}$, so $\mathcal{N}(\mu^{(i)}, s^2_{1})$ is reasonable
+
+
+$\sigma^2 \in (0, \infty)$
+
+- $\log(\sigma^2) \in \mathbb{R}$
+
+- $\log(\sigma^{2c}) = \log(\sigma^{2(i)}) + \varepsilon$ where $\varepsilon \sim \mathcal{N}(0, s^2_2)$
+
+  $\Longrightarrow \sigma^{2c} = \sigma^{2(i)} e^{\varepsilon}$
+
+
+  So $q\left(\sigma^{2c} | \sigma^{2(i)} \right) = \dfrac{1}{\sigma^{2c}} \cdot \dfrac{1}{\sqrt{2 \pi  s_2^2}} \cdot  \exp \left\{ -\dfrac{1}{2s^2_2} \left[ \log(\sigma^{2c}) - \log(\sigma^{2(i)})\right]^2 \right\}$
+<br>
+
+.content-box-yellow[The resulting proposal density isn't symmetric!]
+
+]
+
+---
+
+# Metropolis-Hastings algorithm
+
+.large[
+- Generalizes Metropolis sampling to allow for asymmetric candidate distributions
+
+- Proceeds exactly like Metropolis except the acceptance probability is
+
+    $$R = \min \left\{ \dfrac{p(\theta^{c} | {\rm rest}) / q( \theta^{c} | \theta^{(i)})}{p(\theta^{(i)} | {\rm rest}) / q(\theta^{(i)} | \theta^c )} ,\ 1\right\}$$
+    where $q(\cdot)$ is the proposal density
+
+<br>
+    
+
+  .content-box-yellow[Why is this change necessary?]
+]
+
+
+---
+
+# Metropolis-Hastings algorithm
+
+.large[
+1. Start with the current values: $\mu^{(i)}$ and $\sigma^{2(i)}$
+
+1. Propose a $\mu^c$ from $\mathcal{N}(\mu^{(i)}, s^2_{1})$
+
+1. Compute $R = \min \left\{ p(\mu^{c} | \sigma^2, {\bf y}) \big/ p(\mu^{(i)} |\sigma^2, {\bf y}), 1 \right\}$
+
+1. Accept $\mu^c$ with probability $R$. 
+
+1. Propose a $\sigma^{2c} = \sigma^{2(i)} e^{\varepsilon}$ where $\varepsilon \sim \mathcal{N}(0, s^2_2)$
+
+1. Compute $R = \min \left\{ \dfrac{p(\sigma^{2c} | {\rm rest}) / q( \sigma^{2c} | \sigma^{2(i)})}{p(\theta^{(i)} | {\rm rest}) / q(\sigma^{2(i)} | \theta^c )} ,\ 1\right\}$
+
+1. Accept $\sigma^{2c}$ with probability $R$. 
+]
+
+    
+---
+class: clear
+
+```{r}
+# Data
+y <- log(breakdown[,1])
+n <- length(y)
+
+# Initial parameter values
+theta <- c(0, 0.5)
+
+# Create empty S x p matrix for MCMC draws
+S                    <- 5000
+mcmc.draws           <- matrix(NA, nrow = S, ncol = 2)
+colnames(mcmc.draws) <- c("mu", "sig2")
+
+# Candidate standard devations
+s1 <- 0.3
+s2 <- .8
+
+# Acceptance rate tracking
+att   <- rep(0, 2)  # attempts
+acc   <- rep(0, 2)  # accepts
+```
+
+---
+class: clear
+
+```{r}
+for(i in 1:S){
+  att <- att + 1
+  
+  # mu-step
+  mu.can <- rnorm(n = 1, mean = theta[1], sd = s1) # candidate
+  R <- exp(-sum((y - mu.can)^2) / (2*theta[2])) / 
+    exp(-sum((y - theta[1])^2) / (2*theta[2]))     # accept prob.
+  
+  # Accept/reject mu.can
+  u <- runif(1) <= R
+  theta[1] <- mu.can * (u == 1) + theta[1] * (u == 0)
+  acc[1] <- acc[1] + u
+  
+  # sigma2-step
+  epsilon <- rnorm(1, 0, sd = s2)
+  var.can <- theta[2] * exp(epsilon)
+  R <- (var.can^(-n/2 - 1)*exp(-sum((y-theta[1])^2)/(2*var.can)))/
+    (theta[2]^(-n/2 - 1)*exp(-sum((y-theta[1])^2)/(2*theta[2])))
+  
+  # Accept/reject var.can
+  u <- runif(1) <= R
+  theta[2] = var.can * (u==1) + theta[2] * (u==0)
+  acc[2] <- acc[2] + u
+  
+  # Store the draws
+  mcmc.draws[i,] = theta
+}
+```
