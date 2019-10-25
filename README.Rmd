@@ -133,7 +133,7 @@ Date | Reading | Topic | Materials
 | | | 
 21-Oct | | No class - Midterm break |
 23-Oct | BSM 3.2-3.2.1 | Gibbs sampling | [Slides](https://aloy.github.io/math315-fall2019/15-gibbs.html#1); [Handout](docs/15H-gibbs.pdf)
-25-Oct | BSM 3.2.2 | Metropolis sampling | [Slides](https://aloy.github.io/math315-fall2019/16-metropolis.html#1)
+25-Oct | BSM 3.2.2 | Metropolis sampling | [Slides](https://aloy.github.io/math315-fall2019/16-metropolis.html#1); [Gibbs example solution](docs/16H-soln-gibbs-example.pdf)
 | | | 
 28-Oct | BSM 3.2.2 | Metropolis-Hastings sampling | [Slides](https://aloy.github.io/math315-fall2019/16-metropolis.html#19)
 30-Oct | BSM 3.3 | Intro to JAGS |
