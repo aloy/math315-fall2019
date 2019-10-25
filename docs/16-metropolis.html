@@ -31,7 +31,7 @@ class: center, middle, inverse, title-slide
 
     + public safety
     
-    +  aerospace manufacturers avility to develop and field new rocket systems.
+    +  aerospace manufacturer's ability to develop and field new rocket systems.
 
 - Johnson et al. (2005) data from 1980-2002
 
@@ -217,14 +217,17 @@ Are you comfortable with this chain?
 # Model
 
 .large[
-`\(Y_i= \log({\rm time}_i)\)` 
 
-.bold[Likelihood:] `\(Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)\)`
+Let `\(T_i\)` denote the breakdown time and `\(Y_i= \log(T_i)\)` 
 
-&lt;br&gt;
+.bold[Likelihood:] 
+
+- `\(T_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)\)`
+
+- `\(Y_i \overset{\rm iid}{\sim} {\rm Normal}(\mu, \sigma^2=.4)\)`
+
 
 .bold[Noninformative prior:] `\(\pi(\mu) \propto 1\)`
-
 &lt;br&gt;
 
 .bold[Posterior:]
@@ -346,14 +349,16 @@ class: inverse, center, middle
 # More realistic model
 
 .large[
-`\(Y_i= \log({\rm time}_i)\)` 
+Let `\(T_i\)` denote the breakdown time and `\(Y_i= \log(T_i)\)` 
 
-.bold[Likelihood:] `\(Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2)\)`
+.bold[Likelihood:] 
 
-&lt;br&gt;
+- `\(T_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)\)`
+
+- `\(Y_i \overset{\rm iid}{\sim} {\rm Normal}(\mu, \sigma^2=.4)\)`
+
 
 .bold[Noninformative prior:] `\(\pi(\mu, \sigma^2) \propto 1 / \sigma^2\)`
-
 &lt;br&gt;
 
 .bold[Posterior:]

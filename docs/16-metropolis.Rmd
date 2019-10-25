@@ -35,7 +35,7 @@ launches <- read.table("https://www4.stat.ncsu.edu/~wilson/BR/table21.txt", head
 
     + public safety
     
-    +  aerospace manufacturers avility to develop and field new rocket systems.
+    +  aerospace manufacturer's ability to develop and field new rocket systems.
 
 - Johnson et al. (2005) data from 1980-2002
 
@@ -272,14 +272,17 @@ ggplot(data = breakdown) +
 # Model
 
 .large[
-$Y_i= \log({\rm time}_i)$ 
 
-.bold[Likelihood:] $Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)$
+Let $T_i$ denote the breakdown time and $Y_i= \log(T_i)$ 
 
-<br>
+.bold[Likelihood:] 
+
+- $T_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)$
+
+- $Y_i \overset{\rm iid}{\sim} {\rm Normal}(\mu, \sigma^2=.4)$
+
 
 .bold[Noninformative prior:] $\pi(\mu) \propto 1$
-
 <br>
 
 .bold[Posterior:]
@@ -460,14 +463,16 @@ class: inverse, center, middle
 # More realistic model
 
 .large[
-$Y_i= \log({\rm time}_i)$ 
+Let $T_i$ denote the breakdown time and $Y_i= \log(T_i)$ 
 
-.bold[Likelihood:] $Y_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2)$
+.bold[Likelihood:] 
 
-<br>
+- $T_i \overset{\rm iid}{\sim} {\rm LogNormal}(\mu, \sigma^2=.4)$
+
+- $Y_i \overset{\rm iid}{\sim} {\rm Normal}(\mu, \sigma^2=.4)$
+
 
 .bold[Noninformative prior:] $\pi(\mu, \sigma^2) \propto 1 / \sigma^2$
-
 <br>
 
 .bold[Posterior:]
