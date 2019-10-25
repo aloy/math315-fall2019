@@ -67,7 +67,7 @@ I will post homework assignments and their solutions here. Check the folders at 
 ## Class materials
 
 Links to any slides and handouts are in the calendar section below. 
-Check the folders above for the .Rmd files containing the R code used 
+Check the [docs folder](docs/) above for the .Rmd files containing the R code used 
 to generate slides, etc.
 
 ## Exam review
@@ -90,6 +90,8 @@ Homework
 Exam 1: Wednesday, October 16
 
 [Case study 1](case_study/): Wednesday, October 23 by 4 pm
+
+Case study 2: Friday, November 8 by 4 pm
 
 Exam 2: Wednesday, November 13
 
@@ -131,4 +133,8 @@ Date | Reading | Topic | Materials
 | | | 
 21-Oct | | No class - Midterm break |
 23-Oct | BSM 3.2-3.2.1 | Gibbs sampling | [Slides](https://aloy.github.io/math315-fall2019/15-gibbs.html#1); [Handout](docs/15H-gibbs.pdf)
-25-Oct | BSM 3.2.2 | Metropolis sampling |
+25-Oct | BSM 3.2.2 | Metropolis sampling | [Slides](https://aloy.github.io/math315-fall2019/16-metropolis.html#1)
+| | | 
+28-Oct | BSM 3.2.2 | Metropolis-Hastings sampling | [Slides](https://aloy.github.io/math315-fall2019/16-metropolis.html#19)
+30-Oct | BSM 3.3 | Intro to JAGS |
+1-Nov  | BSM 3.2.3-3.2.5 | Convergence issues |
