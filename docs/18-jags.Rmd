@@ -1,0 +1,689 @@
+---
+title: "MCMC software"
+author: "Math 315: Bayesian Statistics"
+header-includes:
+   - \usepackage{mathtools}
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(gridExtra)
+library(ggplot2)
+library(ggthemes)
+library(LearnBayes)
+library(rjags)
+library(coda)
+
+three.cols <- colorblind_pal()(3)
+
+# ill-posed model
+bad_string <- textConnection(
+  "model{
+    Y    ~ dpois(exp(mu[1] + mu[2]))
+    mu[1] ~ dnorm(1, 0.001)
+    mu[2] ~ dnorm(1, 0.001)
+  }"
+)
+
+inits.bad <- list(
+  list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 2019, mu = rnorm(2, 0, 5)),
+  list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 2020, mu = rnorm(2, 0, 5)),
+  list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 2021, mu = rnorm(2, 0, 5))
+)
+bad_model <- jags.model(
+  bad_string, 
+  quiet=TRUE,
+  n.chains = 3,
+  data = list(Y=1),
+  inits = inits.bad
+)
+
+update(bad_model, 1000, progress.bar="none") # Burnin for 1000 samples
+
+bad_samples <- coda.samples(
+  bad_model, 
+  variable.names=c("mu"), 
+  n.iter=5000, 
+  progress.bar="none"
+)
+
+
+# good model
+good_string <- textConnection(
+  "model{
+    Y1 ~ dpois(exp(mu[1]))
+    Y2 ~ dpois(exp(mu[2]))
+    mu[1] ~ dnorm(1, 0.001)
+    mu[2] ~ dnorm(1, 0.001)
+  }"
+)
+
+inits.good <- list(
+  list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 2022, mu = rnorm(2, 0, 5)),
+  list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 2023, mu = rnorm(2, 0, 5)),
+  list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 2024, mu = rnorm(2, 0, 5))
+)
+good_model <- jags.model(
+  good_string, 
+  quiet=TRUE,
+  n.chains = 3,
+  data = list(Y1=1, Y2 = 10),
+  inits = inits.good
+)
+
+update(good_model, 1000, progress.bar="none") # Burnin for 1000 samples
+
+good_samples <- coda.samples(
+  good_model, 
+  variable.names=c("mu"), 
+  n.iter=5000, 
+  progress.bar="none"
+)
+
+```
+
+# Summary of MCMC
+
+.large[
+- With the combination of Gibbs and Metropolis-Hastings
+sampling we can fit virtually any model
+
+- In some cases Bayesian computing is actually preferable
+to maximum likelihood analysis
+
+- In most cases Bayesian computing is slower
+
+- However, it is often worth the wait for
+improved uncertainty quantification and interpretability
+
+- In all cases it is important to carefully monitor convergence 
+]
+
+.footnote[Slide adapted from Brian Reich]
+
+---
+
+# Why Just Another Gibbs Sampler (JAGS)?
+
+.large[
+- You can fit virtually any model
+
+- You can call JAGS from R, allowing for plotting and
+data manipulation in R
+
+- It runs on all platforms: LINUX, Mac, Windows
+
+- There is a lot of help online
+
+- R has many built in packages for convergence diagnostics
+]
+
+.footnote[Slide adapted from Brian Reich]
+
+---
+
+# How does JAGS work?
+
+.large[
+- You specify the model by declaring the likelihood and priors
+
+- JAGS then sets up the MCMC sampler
+    + e.g., works out the full conditional distributions for all parameters
+
+- It returns MCMC samples in a matrix or array
+
+- It also automatically produces posterior summaries like
+means, credible sets, and convergence diagnostics
+
+- User’s manual: http://people.stat.sc.edu/hansont/stat740/jags_user_manual.pdf
+]
+
+.footnote[Slide adapted from Brian Reich]
+
+---
+
+# Steps for any analysis using JAGS
+
+.large[
+1. Specify the model as a string
+
+2. Compile the model using `jags.model()`
+
+3. Draw burn-in samples using `update()`
+
+4. Draw posterior samples using `coda.samples()`
+
+5. Inspect/summarize the results using the `plot()` and `summary()`
+]
+
+---
+
+# Example: Rocket launches
+
+.large[
+$Y_i =$ 0 or 1 (failure/success)
+
+.bold[Likelihood:] $Y_i \overset{\rm iid}{\sim}{\rm Bernoulli} (\theta)$
+
+.bold[Prior:] Elicitation leads to uniform on (0.1, 0.9)
+
+.bold[Posterior:]
+
+$$p(\theta | y) \propto \begin{cases}
+\theta^3 (1-\theta)^8 & \text{if } 0.1 < \theta < 0.9\\
+0 & \text{otherwise.}\end{cases}$$
+]
+
+---
+
+# 0. Load rjags and data
+
+```{r message=FALSE}
+library(rjags)
+
+# Load data
+launches <- read.table("https://www4.stat.ncsu.edu/~wilson/BR/table21.txt", header = TRUE)
+y <- launches$Outcome
+n <- nrow(launches)
+```
+
+---
+
+# 1. Specify the model as a string
+
+```{r}
+model_string <- textConnection("model{
+
+  # Likelihood
+  for(i in 1:n) {
+    y[i] ~ dbern(theta)
+  }
+  
+  # Prior
+  theta ~ dunif(a, b)
+  
+}")
+```
+
+.content-box-yellow[
+.large[
+Be sure to use `textConnection()` if you are not saving this model string as a separate text file.
+]
+]
+
+---
+# 2. Compile the MCMC code
+
+```{r}
+inits <- list(theta = 0.5)
+data  <- list(y = y, n = n, a = 0.1, b = 0.9)
+model <- jags.model(model_string, data = data, 
+                    inits = inits, n.chains = 1)
+```
+
+
+.content-box-yellow[
+.large[
+Be sure to use `inits` and `data` should be **lists**
+]
+]
+
+---
+
+# 3. Draw burn-in samples 
+
+```{r}
+update(model, 1000)
+```
+
+.content-box-yellow[
+.large[
+Add `progress.bar = "none"` to silence the progress bar in your .Rmd files]
+]
+
+---
+
+# 4. Draw posterior samples
+
+```{r}
+samples <- coda.samples(
+  model, 
+  variable.names = "theta", 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+```
+
+.content-box-yellow[
+.large[
+`variable.names` expects a character vector with the names of the variables to be monitored]
+]
+
+
+---
+
+# 5. Inspect/summarize the results
+
+```{r}
+summary(samples)
+```
+
+---
+
+
+# 5. Inspect/summarize the results
+
+```{r fig.width = 8, fig.height = 3.5}
+plot(samples)
+```
+
+---
+
+class: inverse
+
+# Your turn
+
+.Large[.bolder[Work through the examples on the JAGS handout with a neighbor.]]
+
+
+---
+
+# Tuning MCMC
+
+.large[
+Three main decisions:
+
+- Selecting the initial values
+
+- Determining if/when the chain(s) has converged
+
+- Selecting the number of samples needed to approximate
+]
+
+---
+
+# Initial values
+
+.large[
+- The algorithm will eventually converge no matter what
+initial values you select
+
+- Choosing good starting values will speed up convergence
+
+- It is important to try a few initial values to verify they all give
+the same result
+
+- Usually 3-5 separate chains is sufficient
+
+.content-box-yellow[
+**Common strategies**:
+
+1. Select good initial values using method of
+moments or MLE
+
+2. Purposely pick bad but different initial values for
+each chain to check convergence
+]
+]
+
+---
+
+# Convergence diagnostics
+
+.large[
+
+.content-box-yellow[
+Don't assume that your Markov chain converged to the desired stationary distribution just because "it worked."
+]
+
+
+A **"good" Markov chain** should be:
+
+- **Stationary**: draws should within the posterior (stable path around the center of gravity)
+
+- **Well mixed**: 
+
+    + successive draws should not be highly correlated
+    
+    + each chain should target the same stationary distribution
+
+]
+
+---
+
+# Convergence diagnostics
+.large[
+The **coda** R package has dozens of diagnostics
+
+```{r}
+library(coda)
+```
+
+
+Did my chains converge?
+
+- Geweke
+
+- Gelman-Rubin
+
+
+Did I run the sampler long enough after convergence?
+
+- Effective sample size
+
+- Standard errors for the posterior mean estimate
+]
+
+---
+class: inverse
+
+# Your turn
+
+.large[.bold[With a neighbor, decide whether ethe chains are well mixed]]
+
+```{r echo=FALSE, fig.width = 8, fig.height = 4, out.width = "100%"}
+par(mfrow = c(1, 2))
+mu1_bad <- lapply(bad_samples, "[", , 1)
+mu1_good <- lapply(good_samples, "[", , 1)
+traceplot(mu1_bad, main = "Model 1", col = three.cols)
+traceplot(mu1_good, main = "Model 2", col = three.cols)
+```
+
+
+---
+class: inverse
+
+# Your turn
+
+.large[.bold[With a neighbor, decide whether each chain converged]]
+
+```{r yourturn-chain1, echo=FALSE, fig.width = 8, fig.height = 4, out.width = "100%"}
+par(mfrow = c(1, 2))
+traceplot(bad_samples[[1]][,2], main = "Chain 1")
+traceplot(good_samples[[1]][,2], main = "Chain 2")
+```
+
+
+---
+
+# Geweke diagnostic
+
+.large[
+- **Idea**: a two-sample test comparing the mean of a chain between batches at the beginning versus the end 
+
+- By default, JAGS compares the first 10% with the last 50%
+
+- Test statistic is a Z-score with the standard errors
+adjusted for autocorrelation
+]
+
+```{r yourturn-chain1, echo=FALSE, fig.width = 8, fig.height = 3.5, out.width = "95%"}
+```
+
+---
+
+# Geweke diagnostic
+
+.pull-left[
+
+```{r fig.height = 3.5, fig.width = 4, echo=FALSE, out.width = "85%"}
+traceplot(bad_samples[[1]][,2], main = "Chain 1")
+```
+
+```{r}
+geweke.diag(bad_samples[[1]])
+```
+
+
+]
+
+.pull-right[
+
+```{r fig.height = 3.5, fig.width = 4, echo=FALSE, out.width = "85%"}
+traceplot(good_samples[[1]][,2], main = "Chain 2")
+```
+
+```{r}
+geweke.diag(good_samples[[1]])
+```
+
+
+]
+
+---
+
+# Gelman-Rubin diagnostic
+  
+.large[
+- Effective convergence of Markov chain simulation has
+been reached when inferences for quantities of interest do not depend
+on the starting point of the simulations.
+
+- If we run multiple chains, we hope that all chains give same result
+
+- Gelman and Rubin (1992) proposed (essentially) an ANOVA test of whether the chains have the same mean
+
+- $R_j$ is scaled and approaches 1 from above
+
+    + $R_j = 1 \Rightarrow$ perfect convergence
+
+    + $R_j \ge 1.1 \Rightarrow$ red flag
+]
+
+---
+
+# Gelman-Rubin diagnostic
+
+.pull-left[
+```{r fig.height = 3.5, fig.width = 4, echo=FALSE, out.width = "85%"}
+traceplot(mu1_bad, main = "Chain 1", col = three.cols)
+```
+
+```{r}
+gelman.diag(mu1_bad)
+```
+
+
+]
+
+.pull-right[
+
+```{r fig.height = 3.5, fig.width = 4, echo=FALSE, out.width = "85%"}
+traceplot(mu1_good, main = "Chain 2", col = three.cols)
+```
+
+```{r}
+gelman.diag(mu1_good)
+```
+
+
+]
+
+---
+
+# Autocorrelation
+
+.large[
+**Definition:**  the correlation between samples $h$ iterations apart
+
+$$\rho(h) = {\rm Corr}(\theta_j^{(s)}, \theta_j^{(s-h)})$$
+
+**So what?**<br> A chain with high correlation is said to exhibit **poor mixing**
+
+]
+
+---
+
+# Autocorrelation
+
+.pull-left[
+```{r fig.height = 7, fig.width = 4, echo=FALSE, out.width = "80%"}
+par(mfrow = c(2, 1), mar=c(4, 4, 2, 1))
+traceplot(mu1_bad[[1]], main = "Chain 1")
+autocorr.plot(mu1_bad[[1]], auto.layout = FALSE)
+```
+
+]
+
+.pull-right[
+```{r fig.height = 7, fig.width = 4, echo=FALSE, out.width = "80%"}
+par(mfrow = c(2, 1), mar=c(4, 4, 2, 1))
+traceplot(mu1_good[[1]], main = "Chain 2")
+autocorr.plot(mu1_good[[1]], auto.layout = FALSE)
+```
+]
+
+
+---
+
+# Autocorrelation
+
+.large[
+- Lower values are better, but if the chains are long enough
+even large values can be OK
+
+- **Thinning** the Markov chain means keeping only every kth draw, where k is chosen so that the autocorrelation is small
+
+- `thin` argument to `coda.samples()` implements this
+
+- This is always less efficient than using all samples, but can
+save memory
+]
+
+---
+
+# Effective sample size
+
+.large[
+- Highly correlated samples have less information than
+independent samples
+
+- $S=$ \# MCMC samples after burn in
+
+
+- **Effective samples size (ESS)**
+
+$$ESS_k = S \Big/ \left(1 + 2 \displaystyle \sum_{k=1}^\infty \rho(k)\right)$$
+
+- ESS = "equivalent number of independent observations"
+
+- Should be at least a few thousand for all parameters
+]
+
+---
+
+# Effective sample size
+
+.pull-left[
+```{r fig.height = 3.5, fig.width = 4, echo=FALSE, out.width = "90%"}
+par(mar=c(4, 4, 2, 1))
+autocorr.plot(mu1_bad[[1]], auto.layout = FALSE)
+```
+
+```{r}
+# ESS for single chain of mu1
+# n.iter = 5000
+effectiveSize(mu1_bad[[1]])  
+```
+
+
+]
+
+.pull-right[
+```{r fig.height = 3.5, fig.width = 4, echo=FALSE, out.width = "90%"}
+par(mar=c(4, 4, 2, 1))
+autocorr.plot(mu1_good[[1]], auto.layout = FALSE)
+```
+
+```{r}
+# ESS for single chain of mu1
+# n.iter = 5000
+effectiveSize(mu1_good[[1]])  
+```
+]
+
+---
+
+# Standard errors of posterior mean estimates
+
+.large[
+- Assuming independence the standard error is
+
+    $$\text{Naive SE} = \dfrac{s}{\sqrt{S}}$$
+
+    where $s =$ sample SD
+    
+- A more realistic standard error is
+
+$$\text{Time-series SE} = \dfrac{s}{\sqrt{ESS}}$$
+
+-  If the SE is too large, rerun the MCMC algorithm for a larger number of samples
+]
+
+---
+
+# Standard errors of posterior mean estimates
+
+```{r}
+summary(bad_samples)  
+```
+
+
+---
+
+# Standard errors of posterior mean estimates
+
+
+```{r}
+summary(good_samples)    
+```
+
+
+
+---
+
+# What to do if the chains haven't converged?
+
+.large[
+- Increase the number of iterations
+
+- Tune the M-H candidate distribution
+
+- Use better initial values
+
+- Use a more advanced algorithm
+
+- Simplify/reparameterize the model
+
+- Use (more) informative priors
+
+- Run a simulation study
+
+]
+
+---
+
+# What to do for massive datsets?
+
+.large[
+- MAP estimation
+
+- Bayesian CLT
+
+- Variational Bayesian computing: Approximates the posterior by assuming the posterior is independent across parameters (fast, but questionable statistical properties)
+
+-  Parallel computing: MCMC is inherently sequential, but often some steps can be done in parallel, e.g., onerous likelihood computations
+
+- Divide and Conquer: Split the data into batches and
+analysis them in parallel, and then carefully combine the
+result of the batch analyses
+]
