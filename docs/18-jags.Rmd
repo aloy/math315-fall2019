@@ -233,7 +233,7 @@ model <- jags.model(model_string, data = data,
 
 .content-box-yellow[
 .large[
-Be sure to use `inits` and `data` should be **lists**
+`inits` and `data` should be **lists**
 ]
 ]
 
@@ -294,6 +294,9 @@ class: inverse
 
 .Large[.bolder[Work through the examples on the JAGS handout with a neighbor.]]
 
+.Large[.bolder[Check GitHub for a .Rmd template]]
+
+.Large[.bolder[https://github.com/aloy/math315-fall2019]]
 
 ---
 
@@ -388,7 +391,7 @@ class: inverse
 
 # Your turn
 
-.large[.bold[With a neighbor, decide whether ethe chains are well mixed]]
+.large[.bold[With a neighbor, decide whether the chains are well mixed]]
 
 ```{r echo=FALSE, fig.width = 8, fig.height = 4, out.width = "100%"}
 par(mfrow = c(1, 2))
