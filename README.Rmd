@@ -89,9 +89,9 @@ Homework
 
 Exam 1: Wednesday, October 16
 
-[Case study 1](case_study/): Wednesday, October 23 by 4 pm
+[Case study 1](case_study/case1_f2019.pdf): Wednesday, October 23 by 4 pm
 
-Case study 2: Friday, November 8 by 4 pm
+[Case study 2](case_study/case2_f2019.pdf): Friday, November 8 by 4 pm
 
 Exam 2: Wednesday, November 13
 
