@@ -1,0 +1,281 @@
+---
+title: "Using JAGS to run MCMC"
+author: "Math 315, Fall 2019"
+geometry: "margin=.8in"
+header-includes:
+   - \usepackage{multicol}
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, cache=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+For the remainder of the term we will use Just Another Gibbs Sampler (JAGS) to draw MCMC samples from our posterior distributions. In class, we won't be able to discuss every distribution or function you may need to specify you JAGS model, so be sure to keep the URL to the JAGS user's manual handy: https://github.com/aloy/math315-fall2019/blob/master/jags_user_manual.pdf.
+
+## Key steps
+
+Every JAGS program has five key components:
+
+1. Specify the model as a string (or save it to a text file)
+
+2. Compile the model using `jags.model()`
+
+3. Draw burn-in samples using `update()`
+
+4. Draw posterior samples using `coda.samples()`
+
+5. Inspect/summarize the results using the `plot()` and `summary()`
+
+
+## Example: Rocket launches
+
+Let's look at a small example first by revisiting our rocket launch example. Let  $Y= \#$ successful launches. Then the model is given by:
+
+- Likelihood: We have $n$ iid ${\rm Bernoulli} (\theta)$ trials
+
+- Prior: $\theta \sim \text{Unif}(0.1, 0.9)$
+
+
+### Step 0. Load rjags and data set
+
+```{r message=FALSE}
+library(rjags)
+
+# Load data
+launches <- read.table("https://www4.stat.ncsu.edu/~wilson/BR/table21.txt", header = TRUE)
+y <- launches$Outcome
+n <- nrow(launches)
+```
+
+
+### Step 1. Specify the model as a string
+
+```{r eval=FALSE}
+model_string <- textConnection("model{
+
+  # Likelihood
+  for(i in 1:n) {
+    y[i] ~ dbern(theta)
+  }
+  
+  # Prior
+  theta ~ dunif(a, b)
+  
+}")
+```
+
+- Note: `~` indicates that a variable follow a given distribution
+
+- Be sure to use `textConnection()` if you are not saving this model string as a separate text file.
+
+
+### Step 2. Compile the MCMC code
+
+```{r eval=FALSE}
+inits <- list(theta = 0.5)
+data  <- list(y = y, n = n, a = 0.1, b = 0.9)
+model <- jags.model(model_string, data = data, 
+                    inits = inits, n.chains = 1)
+```
+
+Note: inits` and `data` should be **lists**
+
+
+### Step 3. Draw burn-in samples 
+
+```{r eval=FALSE}
+update(model, 1000)
+```
+
+Note: Add the argument `progress.bar = "none"` to silence the progress bar in your .Rmd files
+
+
+### Step 4. Draw posterior samples
+
+```{r eval=FALSE}
+samples <- coda.samples(
+  model, 
+  variable.names = "theta", 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+```
+
+Note: `variable.names` expects a character vector with the names of the variables to be monitored
+
+
+### Step 5. Inspect/summarize the results
+
+```{r eval=FALSE}
+summary(samples)
+plot(samples)
+```
+
+Note: `samples` will be a matrix with one column in this case.
+
+
+
+
+## Your turn 1: Two-sample model (redux)
+
+In this first example, we'll return to the two-sample model we explored last week. Recall that  the researchers were interested in whether a color distracter slowed student reaction time. The model is given by:
+
+$$
+\begin{aligned}
+Y_i &\overset{\rm iid}{\sim} \mathcal{N}(\mu, \sigma^2), \ i = 1, \ldots, 20 & \text{(standard group)}\\
+Y_j &\overset{\rm iid}{\sim} \mathcal{N}(\mu + \delta, \sigma^2), \ j = 21, \ldots, 40 & \text{(color group)}\\
+\mu &\sim \mathcal{N}(0, 100^2)\\
+\delta &\sim \mathcal{N}(0, 100^2)\\
+\sigma^2 &\sim {\rm InvGamma}(0.01, 0.01)\\
+\end{aligned}
+$$
+
+```{r}
+stroop <- read.csv("http://aloy.rbind.io/data/stroop_game.csv")
+```
+
+\clearpage
+
+Complete the following code to do the following:
+
+i. Specify the model as a text string. Note that `tau =` $1 / \sigma^2$.
+
+i. Compile the MCMC code so that is runs a single chain.
+
+i. Update the model to draw 1000 burn-in samples.
+
+i. Draw 10,000 MCMC samples after burn-in, and monitor the parameters $\mu$, $\delta$, and $\sigma$.
+
+
+```{r eval=FALSE}
+# Data management
+y <- stroop$Time
+y.std <- y[stroop$Type == "Standard"]
+y.col <- y[stroop$Type == "Color"]
+n <- length(y.std)
+m <- length(y.col)
+
+# Specify the model
+stroop_model_string <- ___("model{
+  # Specify the likelihood
+  for(i in 1:n) {
+    y.std[i] ~ dnorm(mu, tau)
+  }
+  
+  for(i in 1:m) {
+    y.col[i] ~ dnorm(mu + delta, tau)
+  }
+
+  # Specify the priors
+  mu ~ ___(0, 1 / pow(100, 2))
+  delta ~ ___(0, 1 / pow(100, 2))
+  tau ~ ___(.01, .01)
+
+  # Calculate sigma
+  sigma <- ___ / sqrt(___)
+}")
+
+# Compile the MCMC code
+inits <- ___(mu = mean(y), delta = 0, tau = 1 / sd(y))
+stroop_data  <- ___(y.std = y.std, y.col = y.col, n = n, m = m)
+stroop_model <- jags.model(___, data = ___, inits = ___, n.chains = ___)
+
+
+# Draw 1000 burn-in samples 
+___(___, 1000)
+
+# Draw 10000 posterior samples
+stroop_samples <- ___(___, 
+  variable.names = ___(___, ___, ___), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+
+# Inspect/summarize the results
+summary(___)
+plot(___)
+```
+
+\clearpage
+
+**Follow-up questions:**
+
+1. Have the chains for $\mu$, $\delta$, and $\sigma$ converged? How do you know?
+
+    \vspace{.5in}
+
+2. Report the posterior mean and SD for each parameter.
+
+    \vspace{.5in}
+
+3. Report a 95% credible interval for $\delta$. What does this say about the difference in average completion time between groups?
+
+    \vspace{.5in}
+
+
+
+
+
+## Your turn 2: Survival analysis
+
+Researchers are interested in modeling the survival times, measured in weeks, of patients who were diagnosed with leukemia. The patients were classified according to two characteristics of white bloods cells. In this example, we will only examine those whose blood is AG+. The sample consists of $n=17$ times in weeks from diagnosis to death.
+
+```{r}
+times <- c(65, 156, 100, 134, 16, 108, 121, 4, 39, 143, 56, 26, 22, 1, 1, 5, 65)
+```
+
+After discussing the problem with the researchers, you decide to use the Weibull distribution to model the survival time of patient $i$, $Y_i$. The Weibull PDF and CDF are given below for your reference, but are available as functions in JAGS.
+\begin{align*}
+f(y_i | v, \lambda) &= \lambda v y_i^{v-1} e^{-\lambda y_i^{v}},\ y_i, v, \lambda > 0 \\
+F(y_i | v, \lambda) &= 1 - e^{-\lambda y_i^{v}}
+\end{align*}
+In addition, you decide to place independent gamma priors on $\lambda$ and $v$, and since you have little prior information about the parameters, so you decide to use $\text{Gamma}(0.01, 0.01)$ for both.
+
+
+**Set up question:** According to the JAGS user manual, what function should you use for the Weibull density.
+
+
+**Your task:** Fit the above model in JAGS and plot the posterior density of the 24-week survival rate, which is defined as $1-F(24 | v, \lambda)$ where $F$ denotes the CDF of a Weibull distribution. (Check the manual for the function that gives the Weibull CDF!) Summarize your findings about the 24-hour survival rate.
+
+
+```{r eval=FALSE}
+# Specify the model string
+survival_model_string <- textConnection("model{
+  # Specify the likelihood
+  for(i in 1:n) {
+    y[i] ~ ___(v, lambda)
+  }
+  
+  # Specify the priors
+  ___ ~ ___(0.01, 0.01)
+  ___ ~ ___(0.01, 0.01)
+  
+  # Calculate 24-week survival rate
+  s24 <- 1 - ___(___, v, lambda)
+}")
+
+# Compile the MCMC code
+inits <- ___(v = 1, lambda = 1)
+survival_data  <- ___(y = ___, n = ___)
+survival_model <- ___(___, data = ___, inits = ___, n.chains = 3)
+
+
+# Draw 1000 burn-in samples 
+update(___, 1000)
+
+# Draw 5000 posterior samples
+survival_samples <- ___(
+  ___, 
+  variable.names = ___, 
+  n.iter = ___, 
+  progress.bar = "none"
+)
+
+# Inspect/summarize the results
+
+
+```
