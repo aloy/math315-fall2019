@@ -467,7 +467,7 @@ summary(good_samples)
 
 ---
 
-# What to do for massive datsets?
+# What to do for massive data sets?
 
 .large[
 - MAP estimation

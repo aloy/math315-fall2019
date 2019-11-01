@@ -162,7 +162,7 @@ geweke.diag(bad_samples[[1]])
 ## Fraction in 2nd window = 0.5 
 ## 
 ##  mu[1]  mu[2] 
-## -1.475  1.559
+##  1.230 -1.194
 ```
 
 
@@ -182,8 +182,8 @@ geweke.diag(good_samples[[1]])
 ## Fraction in 1st window = 0.1
 ## Fraction in 2nd window = 0.5 
 ## 
-##  mu[1]  mu[2] 
-##  1.648 -1.262
+##   mu[1]   mu[2] 
+## -0.5572  2.5130
 ```
 
 
@@ -225,7 +225,7 @@ gelman.diag(mu1_bad)
 ## Potential scale reduction factors:
 ## 
 ##      Point est. Upper C.I.
-## [1,]       1.05       1.08
+## [1,]       1.14       1.43
 ```
 
 
@@ -329,7 +329,7 @@ effectiveSize(mu1_bad[[1]])
 
 ```
 ##     var1 
-## 5.624371
+## 5.590956
 ```
 
 
@@ -346,8 +346,8 @@ effectiveSize(mu1_good[[1]])
 ```
 
 ```
-##     var1 
-## 2247.772
+##   var1 
+## 2314.2
 ```
 ]
 
@@ -388,15 +388,15 @@ summary(bad_samples)
 ## 1. Empirical mean and standard deviation for each variable,
 ##    plus standard error of the mean:
 ## 
-##         Mean    SD Naive SE Time-series SE
-## mu[1]  1.128 20.30   0.1658          5.254
-## mu[2] -1.707 20.29   0.1656          5.205
+##         Mean   SD Naive SE Time-series SE
+## mu[1] -4.277 24.9   0.2033          6.092
+## mu[2]  3.710 24.9   0.2033          6.011
 ## 
 ## 2. Quantiles for each variable:
 ## 
 ##         2.5%    25%    50%   75% 97.5%
-## mu[1] -42.64 -11.85  2.433 16.57 35.89
-## mu[2] -36.49 -17.22 -3.049 11.42 41.89
+## mu[1] -54.28 -21.28 -4.701 13.19 42.02
+## mu[2] -42.53 -13.77  4.013 20.86 53.84
 ```
 
 
@@ -420,15 +420,15 @@ summary(good_samples)
 ## 1. Empirical mean and standard deviation for each variable,
 ##    plus standard error of the mean:
 ## 
-##         Mean     SD Naive SE Time-series SE
-## mu[1] -0.575 1.2711 0.010378       0.015457
-## mu[2]  2.252 0.3244 0.002649       0.003399
+##          Mean     SD Naive SE Time-series SE
+## mu[1] -0.5664 1.2521 0.010224       0.015244
+## mu[2]  2.2494 0.3239 0.002644       0.003461
 ## 
 ## 2. Quantiles for each variable:
 ## 
-##         2.5%    25%     50%    75% 97.5%
-## mu[1] -3.612 -1.252 -0.3645 0.3278 1.326
-## mu[2]  1.574  2.041  2.2700 2.4786 2.840
+##         2.5%    25%     50%   75% 97.5%
+## mu[1] -3.539 -1.234 -0.3642 0.320 1.292
+## mu[2]  1.572  2.040  2.2682 2.473 2.839
 ```
 
 
@@ -456,7 +456,7 @@ summary(good_samples)
 
 ---
 
-# What to do for massive datsets?
+# What to do for massive data sets?
 
 .large[
 - MAP estimation
