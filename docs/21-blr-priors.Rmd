@@ -1,0 +1,836 @@
+---
+title: "Bayesian regression: Choosing priors"
+author: "Math 315: Bayesian Statistics"
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+class: middle, center, inverse
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(rjags)
+library(coda)
+```
+
+# Informative priors
+
+---
+
+# Example: Modeling lung capacity
+
+.large[
+
+**Goal:** investigate the association between smoking and lung capacity using data from 345 adolescents between the ages of 10 and 19. 
+
+**Wrinkle:** Lung function is expected to increase during adolescence, but smoking may slow it's progression 
+
+Variable | Description
+:---------|:---------------
+`FEV`    | forced expiratory volume (in liters per second)
+`Age`    | age in years
+`Smoke`  | `Smoker` or `Nonsmoker`
+
+]
+
+.footnote[
+Source: Rosner (2006) 
+]
+
+---
+
+# Example: Modeling lung capacity
+
+.large[
+Based on domain expertise, the following regression model was proposed:
+
+\begin{align*}
+Y_i | X_i &\sim {\rm MVN}(\mu_i, {\bf I}_n 1/\tau)\\
+\mu_i &= \beta_0 + \beta_1 {\tt Age} + \beta_2 {\tt Smoke} + \beta_3 {\tt Age \times Smoke}
+\end{align*}
+
+<br>
+
+.content-box-yellow[
+How can we set informative priors on $\beta_j$ and $\tau$?
+]
+]
+
+---
+
+# Elicitation for regression coefficients
+
+.large[
+Let $p$ the number of regression coefficients.
+
+Note: $\widehat{\mu_i} =\tilde{X}\beta$ and $\tilde{X}\beta \sim {\rm MVN}(\tilde{Y}, D(\tilde{w}))$, where $D(\tilde{w})$ is a diagonal matrix.
+
+1. Pick $p$ combinations of your predictors that your domain expert can assess independently.
+    - Ask about average response for each setting
+    - Ask to assess probability that the mean is less than some value for each group
+
+1. Setting $\tilde{Y}$, $\tilde{X}$, $D(\tilde{w}))$ we can induce a prior of $\beta$:
+
+$$\beta \sim {\rm MVN} (\tilde{X}^{-1} \tilde{Y}, \tilde{X}^{-1} D(\tilde{w})\tilde{X})$$
+]
+
+
+
+---
+
+# Prior for regression coefficients
+
+.large[
+
+$\mu_i = \beta_0 + \beta_1 {\tt Age} + \beta_2 {\tt Smoke} + \beta_3 {\tt Age \times Smoke}$
+
+We have need priors for $\beta_0, \beta_1, \beta_2, \beta_3$
+
+We need elicit information about four combinations of `Age` and `Smoke`
+
+- 11-year-old smokers
+
+- 13-year-old smokers
+
+- 16-year-old nonsmokers
+
+- 18-year-old smokers
+
+
+.content-box-yellow[
+How can we set up the matrix $\tilde{X}$?
+]
+
+]
+
+---
+
+# Prior for regression coefficients
+
+.large[
+
+$\mu_i = \beta_0 + \beta_1 {\tt Age} + \beta_2 {\tt Smoke} + \beta_3 {\tt Age \times Smoke}$
+
+.pull-left[
+- 11-year-old smokers
+
+- 13-year-old smokers
+
+- 16-year-old nonsmokers
+
+- 18-year-old smokers
+
+]
+
+.pull-right[
+
+$$\tilde{\boldsymbol{X}} = \begin{bmatrix} 1& 11 & 0& 0\\
+ 1& 13& 1& 13\\
+ 1& 16& 0& 0\\
+ 1& 18& 1& 18
+\end{bmatrix}$$
+
+]
+]
+
+---
+
+# Prior for regression coefficients
+
+.large[
+The domain expert...
+
+- expects average FEV among all 18-year-old smokers to be 3.3
+
+- is 99% sure that the mean FEV is less than 4.0 in this group
+
+<br>
+
+Linking elicitation to $\tilde{\mu}_i$ and $\tilde{w}_i$
+
+- $\tilde{\mu}_i = 3.3$
+
+- Assuming a normal prior, solve $4.0 = 3.3 + 2.33 \sqrt{\tilde{w}_i}$<br><br>
+$\Rightarrow \tilde{w}_i = (4-3.3)^2 / 2.33^2 = 0.09$
+]
+
+---
+
+# Prior for regression coefficients
+
+.large[
+Similar steps are used to elicit information about the other three groups.
+
+.pull-left[
+So we have elicited...
+]
+
+.pull-right[
+\begin{align*}
+\tilde{\mu}_1 &\sim \mathcal{N}(2.8, 0.04)\\
+\tilde{\mu}_2 &\sim \mathcal{N}(3.0, 0.04)\\
+\tilde{\mu}_3 &\sim \mathcal{N}(4.0, 0.04)\\
+\tilde{\mu}_4 &\sim \mathcal{N}(3.3, 0.09)
+\end{align*}
+]
+
+Which implies...
+]
+
+$$\tilde{\boldsymbol{X}} \boldsymbol{\beta} =  \begin{bmatrix} \tilde{\mu}_1\\
+  \tilde{\mu}_2\\
+  \tilde{\mu}_3\\
+  \tilde{\mu}_4
+  \end{bmatrix}
+  \sim {\rm MVN} \left( 
+  \begin{bmatrix} 2.8\\
+    3.0\\
+    4.0\\
+    3.3
+    \end{bmatrix}, 
+    \begin{bmatrix} 0.04 & 0 & 0 & 0\\
+    0 & 0.04 & 0 & 0\\
+    0 & 0 & 0.04 & 0\\
+    0 & 0 & 0 & 0.09
+    \end{bmatrix}
+  \right)$$
+
+---
+
+# Prior for regression coefficients
+
+.large[Which implies...]
+
+
+$$\boldsymbol{\beta} 
+  \sim {\rm MVN} \left( 
+  \tilde{\boldsymbol{X}}^{-1} \begin{bmatrix} 2.8\\
+    3.0\\
+    4.0\\
+    3.3
+    \end{bmatrix}, 
+    \tilde{\boldsymbol{X}}^{-1} \begin{bmatrix} 0.04 & 0 & 0 & 0\\
+    0 & 0.04 & 0 & 0\\
+    0 & 0 & 0.04 & 0\\
+    0 & 0 & 0 & 0.09
+    \end{bmatrix} \left(\tilde{\boldsymbol{X}}^{-1} \right)^\prime
+  \right)$$
+
+
+---
+
+
+```{r}
+mu <- c(2.8, 3, 4, 3.3)
+X.tilde <- matrix(c(1, 11, 0, 0,
+                    1, 13, 1, 13,
+                    1, 16, 0, 0,
+                    1, 18, 1, 18) ,ncol = 4, byrow = TRUE)
+beta.mean <- solve(X.tilde) %*% mu
+beta.var  <- solve(X.tilde) %*% diag(c(0.04, 0.04, 0.04, 0.09)) %*% 
+  t(solve(X.tilde))
+
+beta.mean # prior mean vector
+
+beta.var  # prior precision matrix
+```
+
+
+.footnotesize[
+JAGS note: Use `dmnorm` to specify the prior with a mean vector and precision matrix.
+]
+
+---
+
+# Prior for precision
+
+.large[
+To elicit information on $\tau$, the researchers asked the domain expert about 18-year-old smokers
+
+1. What do they expect the average FEV to be? [mean]
+
+1. What's the largest observation they would expect? [95th percentile]
+
+1. How certain are they that the largest observation is above 4? [uncertainty for 95th percentile]
+
+
+
+
+Results:
+
+1. $\tilde{\mu}_0 = 3.3$
+
+1. Largest observation is 5
+
+1. 95% certain
+]
+
+---
+
+# Prior for precision
+
+.large[
+Notice that the elicited information is about the response variable, which is assumed to be normal:
+
+- $\tilde{\mu} = 3.3$
+
+- $5 = 3.3 + 1.645 \sigma_0$ <br> $\Longrightarrow \sigma_0 = 1.7/1.645$ <br> $\Longrightarrow \tau_0 = (1.645 / 1.7)^2 = 0.94$
+
+
+Then, let $\tau_0$ be the mode of the prior distribution:
+
+$$
+0.94 = \frac{a-1}{b} \Longrightarrow a = 0.94b + 1
+$$
+]
+
+<br>
+
+.footnotesize[
+You could also let $\tau_0$ be the mean or median of the prior distribution.
+]
+
+---
+
+# Prior for precision
+.large[
+Domain expert is 95% certain that the 95th percentile is greater than 4:
+
+\begin{align*}
+0.95 &= P(\mu + 1.645 \sigma > 4 | \mu = 3.3)\\
+&= P(\mu + 1.645 \sigma > 4 | \mu = 3.3)\\
+&= P( 1.645 \sigma > 0.7)\\
+&= P(  \sigma > 0.7/ 1.645)\\
+&= P(  \tau < (1.645/0.7)^2)\\
+&= P(\tau < 5.52)
+\end{align*}
+
+
+So `pgamma(5.52, a, b)` should be 0.95
+
+Now, solve the two-equation, two-unknown problem
+
+]
+
+---
+
+# Dealing with partial prior information
+
+.large[
+Suppose the model was actually
+
+$\mu_i = \beta_0 + \beta_1 {\tt Age} + \beta_2 {\tt Smoke} + \beta_3 {\tt Age \times Smoke} + \beta_4 {\tt height} + \beta_5 {\tt sex}$
+
+but we couldn't elicit anymore information from the expert
+
+- standardize `height` 
+
+- elicit information as before, for subjects in each group of average height and in the baseline `sex` category
+
+- place reference priors on $\beta_4$ and $\beta_5$
+
+$$\beta_4, \beta_5 \sim \mathcal{N}(0, 10^6)$$
+]
+
+---
+class: middle, center, inverse 
+
+# Regularizing priors
+
+
+---
+
+## Example: Diabetes progression
+
+.large[
+**Goal:** Model disease progression one year after baseline based on data from 422 patients
+]
+
+Variable | Description
+---------|---------------------------
+`AGE`    | patient's age
+`SEX`    | patient's sex
+`BMI`    | patient's body mass index
+`S1`     | blood serum measurement 1
+`S2`     | blood serum measurement 2
+`S3`     | blood serum measurement 3
+`S4`     | blood serum measurement 4
+`S5`     | blood serum measurement 5
+`S6`     | blood serum measurement 6
+`Y`      | disease progression one year after baseline
+
+.footnotesize[
+*Source:* Efron et al (2004). Least angle regression. *Annals of Statistics*: 32(2)
+]
+
+```{r echo=FALSE}
+diabetes <- read.table("https://web.stanford.edu/~hastie/Papers/LARS/diabetes.data", sep = "\t", header = TRUE)
+
+library(dplyr)
+diabetes <- diabetes %>%
+  mutate_at(vars(c(AGE, BMI:Y)), ~scale(.)[,1])
+
+diabetes <- diabetes %>%
+  mutate(SEX = ifelse(SEX == 1, 0, 1))
+```
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+Proposed model has all predictors in it:
+
+\begin{align*}
+\mu_i =& \beta_0 + \beta_1 {\tt AGE} + \beta_2 {\tt SEX} + \beta_3 {\tt BMI} +\\ 
+&\beta_4 {\tt S1} + \beta_5 {\tt S2} + \beta_6 {\tt S3} + \beta_7 {\tt S4} + \beta_8 {\tt S5}+ \beta_9 {\tt S6}
+\end{align*}
+
+Turn to a neighbor and review the following ideas:
+
+1. What would it mean for this model to be overfit?
+
+1. What would it mean for this model to be underfit?
+]
+
+---
+
+# Regularization
+
+.large[
+- If domain expertise isn't guiding your model building, then .bold[you must be skeptical of the sample!]
+
+- Use informative, conservative priors to reduce overfitting<br>
+$\Rightarrow$ model learns less from the sample
+
+- If your prior is too skeptical, the model will learn too little
+
+- Such priors are called .bold[regularizing]
+]
+
+---
+
+# Regularization
+
+.pull-left[
+.large[
+\begin{align*}
+Y_i &\sim \mathcal{N}(x_i \boldsymbol{\beta}, \sigma^2)\\
+\beta_0 &\sim \mathcal{N}(0, 1/10^6)\\
+\beta_j &\sim \mathcal{N}(0, \sigma^2_0)\\
+\tau &\sim {\rm InvGamma}(0.001, 0.001)\\
+\end{align*}
+
+.content-box-yellow[
+Only regularize slope terms
+]
+]
+]
+
+.pull-right[
+```{r echo=FALSE, fig.height = 2.5, fig.width = 3, out.width = "100%"}
+library(ggplot2)
+ggplot(data = data.frame(x = c(-3, 3)), aes(x = x)) +
+  stat_function(fun = dnorm, n = 500, args = list(mean = 0, sd = 1), linetype = 3) +
+  stat_function(fun = dnorm, n = 500, args = list(mean = 0, sd = 0.5), linetype = 2) +
+  stat_function(fun = dnorm, n = 500, args = list(mean = 0, sd = 0.2), linetype = 1) +
+  theme_light() +
+  labs(x = "parameter value", y = "density") +
+  annotate("text", x = 2.25, y = 0.2, label = "N(0, 1)") +
+  annotate("text", x = -1.5, y = 0.5, label = "N(0, 0.25)") +
+  annotate("text", x = 1.25, y = 1.75, label = "N(0, 0.04)") 
+```
+]
+
+---
+
+.left-column[
+## N(0, 1)
+]
+
+```{r include=FALSE, cache=TRUE}
+library(rjags)
+
+Y <- diabetes$Y
+X <- diabetes[,1:10]
+
+n        <- length(Y)    # sample size
+p        <- ncol(X) + 1  # no. predictors + intercept
+X        <- cbind(1, X)
+
+data   <- list(Y = Y, X = X, n = n, p = p) # data list
+params <- c("beta", "sigma")               # parameters to track
+
+burn     <- 10000 # burn-in period
+n.iter   <- 20000 # no. posterior draws
+thin     <- 10    # thin posterior by k = 10
+n.chains <- 1     # run 1 chain
+
+
+reg1 <- textConnection("model{
+  # Likelihood
+  for(i in 1:n) {
+    Y[i] ~ dnorm(inprod(X[i,], beta[]), taue)
+  }
+  
+  # Priors 
+   beta[1] ~ dnorm(0, 1/pow(10, 3))
+  for(j in 2:p) {
+    beta[j] ~ dnorm(0, 1)
+  }
+  taue ~ dgamma(0.001, 0.001)
+  sigma <- 1 / sqrt(taue)
+}")
+
+reg1.model <- jags.model(
+  reg1, 
+  data = data, 
+  n.chains = n.chains, 
+  quiet = TRUE
+)
+update(reg1.model, burn, progress.bar="none")
+post1 <- coda.samples(
+  reg1.model, 
+  variable.names = params, 
+  thin = thin, 
+  n.iter = n.iter, 
+  progress.bar="none"
+)
+```
+
+```{r echo=FALSE, fig.height = 5, fig.width = 4.5, message=FALSE, out.width = "75%"}
+library(tidybayes)
+post1 %>%
+  gather_draws(beta[i]) %>%
+  filter(i > 1) %>%
+  mutate(coef = i-1) %>%
+  ggplot(aes(x = .value, y = factor(coef, labels = colnames(diabetes)[1:10]))) +
+  geom_vline(xintercept = 0, color = "gray30") +
+  geom_halfeyeh() +
+  labs(x = "estimate", y = "predictor") +
+  theme_light() +
+  lims(x = c(-1.25, 0.9))
+```
+
+---
+
+.left-column[
+## N(0, 0.25)
+]
+
+```{r echo=FALSE, cache=TRUE}
+reg2 <- textConnection("model{
+  # Likelihood
+  for(i in 1:n) {
+    Y[i] ~ dnorm(inprod(X[i,], beta[]), taue)
+  }
+  
+  # Priors 
+  beta[1] ~ dnorm(0, 1/pow(10, 3))
+  for(j in 2:p) {
+    beta[j] ~ dnorm(0, 4)
+  }
+  taue ~ dgamma(0.001, 0.001)
+  sigma <- 1 / sqrt(taue)
+}")
+
+reg2.model <- jags.model(
+  reg2, 
+  data = data, 
+  n.chains = n.chains, 
+  quiet = TRUE
+)
+update(reg2.model, burn, progress.bar="none")
+post2 <- coda.samples(
+  reg2.model, 
+  variable.names = params, 
+  thin = thin, 
+  n.iter = n.iter, 
+  progress.bar="none"
+)
+
+library(tidybayes)
+
+```
+
+```{r echo=FALSE, fig.height = 5, fig.width = 4.5, message=FALSE, out.width = "75%"}
+post2 %>%
+  gather_draws(beta[i]) %>%
+  filter(i > 1) %>%
+  mutate(coef = i-1) %>%
+  ggplot(aes(x = .value, y = factor(coef, labels = colnames(diabetes)[1:10]))) +
+  geom_vline(xintercept = 0, color = "gray30") +
+  geom_halfeyeh() +
+  labs(x = "estimate", y = "predictor") +
+  theme_light() +
+  lims(x = c(-1.25, 0.9))
+```
+
+---
+
+.left-column[
+## N(0, 0.04)
+]
+
+```{r echo=FALSE, cache=TRUE}
+reg3 <- textConnection("model{
+  # Likelihood
+  for(i in 1:n) {
+    Y[i] ~ dnorm(inprod(X[i,], beta[]), taue)
+  }
+  
+  # Priors 
+  beta[1] ~ dnorm(0, 1/pow(10, 3))
+  for(j in 2:p) {
+    beta[j] ~ dnorm(0, 25)
+  }
+  taue ~ dgamma(0.001, 0.001)
+  sigma <- 1 / sqrt(taue)
+}")
+
+reg3.model <- jags.model(
+  reg3, 
+  data = data, 
+  n.chains = n.chains, 
+  quiet = TRUE
+)
+update(reg3.model, burn, progress.bar="none")
+post3 <- coda.samples(
+  reg3.model, 
+  variable.names = params, 
+  thin = thin, 
+  n.iter = n.iter, 
+  progress.bar="none"
+)
+```
+
+```{r echo=FALSE, fig.height = 5, fig.width = 4.5, message=FALSE, out.width = "75%"}
+post3 %>%
+  gather_draws(beta[i]) %>%
+  filter(i > 1) %>%
+  mutate(coef = i-1) %>%
+  ggplot(aes(x = .value, y = factor(coef, labels = colnames(diabetes)[1:10]))) +
+  geom_vline(xintercept = 0, color = "gray30") +
+  geom_halfeyeh() +
+  labs(x = "estimate", y = "predictor") +
+  theme_light() +
+  lims(x = c(-1.25, 0.9))
+```
+
+---
+
+# Univariate Gaussian priors
+
+.large[
+In a fully Bayesian analysis, we can allow the data to determine how much to shrink the coefficients towards zero
+\begin{align*}
+\boldsymbol{Y} | \boldsymbol{X}, \boldsymbol{\beta}, \sigma^2 &\sim {\rm MVN}\left(\boldsymbol{X} \boldsymbol{\beta}, \sigma^2  \boldsymbol{I}_n \right)\\
+\beta_0 & \sim \mathcal{N}(0, 10^6)\\
+\beta_j | \sigma^2 &\overset{\rm iid}{\sim} \mathcal{N}(0, \sigma^2 \tau^2)\\
+\sigma^2 & \sim{\rm InverseGamma}(c, c)\\
+\tau^2 & \sim {\rm InverseGamma}(c, c)
+\end{align*}
+
+where $c$ is a small, say $c=0.1$ or $c=0.01$
+]
+
+---
+
+# Univariate Gaussian priors
+
+.large[
+- The posterior mode is given by
+
+    $$\underset{\boldsymbol{\beta}}{\rm argmin} \sum_{i=1}^n \left( Y_i - \sum_{j=1}^p X_{ij} \beta_j \right)^2 + \lambda \sum_{j=1}^p \beta_j^2$$
+
+    where $\lambda = 1/\tau^2$
+    
+- In classical statistics, this is known as the ridge regression
+solution and is used to stabilize the least squares solution
+]
+
+---
+
+# BLASSO
+
+.large[
+- An increasingly-popular prior is the double exponential or
+Bayesian LASSO prior
+
+- $\beta_j \sim {\rm DE}(\tau)$ which has PDF
+
+$$f(\beta) \propto \exp \left( - \frac{|\beta|}{\tau} \right)$$
+
+- The square in the Gaussian prior is replaced with an
+absolute value
+
+- The shape of the PDF is thus more peaked at zero (next
+slide)
+
+- The BLASSO prior favors settings where there are many $\beta_j$
+near zero and a few large $\beta_j$
+
+- That is, $p$ is large but most of the covariates are noise
+]
+
+---
+
+# BLASSO
+
+.large[
+In a fully Bayesian analysis, we can allow the data to determine how much to shrink the coefficients towards zero
+\begin{align*}
+\boldsymbol{Y} | \boldsymbol{X}, \boldsymbol{\beta}, \sigma^2 &\sim {\rm MVN}\left(\boldsymbol{X} \boldsymbol{\beta}, \sigma^2  \boldsymbol{I}_n \right)\\
+\beta_0 & \sim \mathcal{N}(0, 10^6)\\
+\beta_j | \sigma^2 &\overset{\rm iid}{\sim} {\rm DE}(\sigma^2 \tau^2)\\
+\sigma^2 & \sim{\rm InverseGamma}(c, c)\\
+\tau^2 & \sim {\rm InverseGamma}(c, c)
+\end{align*}
+
+where $c$ is a small, say $c=0.1$ or $c=0.01$
+]
+
+---
+
+# BLASSO
+
+```{r fig.height = 3, fig.width=5.5, echo=FALSE, out.width="100%", fig.align='center'}
+library(extraDistr)
+ggplot(data = data.frame(x = c(-3, 3)), aes(x = x)) +
+  stat_function(fun = dnorm, n = 500, args = list(mean = 0, sd = 0.8), aes(linetype = "Normal")) +
+  stat_function(fun = dlaplace, n = 500, args = list(mu = 0, sigma = 1), aes(linetype = "DE")) +
+  theme_light() +
+  labs(x = expression(beta), y = "Prior density") +
+  scale_linetype_manual("", values = c(1, 2))
+```
+
+
+---
+
+# BLASSO
+
+.large[
+- The posterior mode is given by
+
+    $$\underset{\boldsymbol{\beta}}{\rm argmin} \sum_{i=1}^n \left( Y_i - \sum_{j=1}^p X_{ij} \beta_j \right)^2 + \lambda \sum_{j=1}^p |\beta_j|$$
+
+    where $\lambda = 1/\tau^2$
+    
+- In classical statistics, this is known as the LASSO solution
+
+- It is popular because it adds stability by shrinking estimates
+towards zero, and also sets some coefficients to zero
+
+- Covariates with coefficients set to zero can be removed
+
+- Therefore, LASSO performs variables selection and
+estimation simultaneously
+]
+
+---
+
+.left-column[
+## Ridge
+]
+
+```{r echo=FALSE, cache=TRUE}
+ridge <- textConnection("model{
+  # Likelihood
+  for(i in 1:n) {
+    Y[i] ~ dnorm(inprod(X[i,], beta[]), taue)
+  }
+  
+  # Priors 
+  beta[1] ~ dnorm(0, 0.001)
+  for(j in 2:p) {
+    beta[j] ~ dnorm(0, taub * taue)
+  }
+  taue ~ dgamma(0.1, 0.1)
+  taub ~ dgamma(0.1, 0.1)
+}")
+
+ridge.model <- jags.model(
+  ridge, 
+  data = data, 
+  n.chains = n.chains, 
+  quiet = TRUE
+)
+update(ridge.model, burn, progress.bar="none")
+post4 <- coda.samples(
+  ridge.model, 
+  variable.names = "beta", 
+  thin = thin, 
+  n.iter = n.iter, 
+  progress.bar="none"
+)
+```
+
+```{r echo=FALSE, fig.height = 5, fig.width = 4.5, message=FALSE, out.width = "75%"}
+post4 %>%
+  gather_draws(beta[i]) %>%
+  filter(i > 1) %>%
+  mutate(coef = i-1) %>%
+  ggplot(aes(x = .value, y = factor(coef, labels = colnames(diabetes)[1:10]))) +
+  geom_vline(xintercept = 0, color = "gray30") +
+  geom_halfeyeh() +
+  labs(x = "estimate", y = "predictor") +
+  theme_light() +
+  lims(x = c(-1.25, 0.9))
+```
+
+---
+
+.left-column[
+## BLASSO
+]
+
+```{r echo=FALSE, cache=TRUE}
+blasso <- textConnection("model{
+  # Likelihood
+  for(i in 1:n) {
+    Y[i] ~ dnorm(inprod(X[i,], beta[]), taue)
+  }
+  
+  # Priors 
+  beta[1] ~ dnorm(0, 0.001)
+  for(j in 2:p) {
+    beta[j] ~ ddexp(0, taub * taue)
+  }
+  taue ~ dgamma(0.1, 0.1)
+  taub ~ dgamma(0.1, 0.1)
+}")
+
+blasso.model <- jags.model(
+  blasso, 
+  data = data, 
+  n.chains = n.chains, 
+  quiet = TRUE
+)
+update(blasso.model, burn, progress.bar="none")
+post5 <- coda.samples(
+  blasso.model, 
+  variable.names = "beta", 
+  thin = thin, 
+  n.iter = n.iter, 
+  progress.bar="none"
+)
+```
+
+```{r echo=FALSE, fig.height = 5, fig.width = 4.5, message=FALSE, out.width = "75%"}
+post5 %>%
+  gather_draws(beta[i]) %>%
+  filter(i > 1) %>%
+  mutate(coef = i-1) %>%
+  ggplot(aes(x = .value, y = factor(coef, labels = colnames(diabetes)[1:10]))) +
+  geom_vline(xintercept = 0, color = "gray30") +
+  geom_halfeyeh() +
+  labs(x = "estimate", y = "predictor") +
+  theme_light() +
+  lims(x = c(-1.25, 0.9))
+```
