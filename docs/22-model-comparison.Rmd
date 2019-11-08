@@ -1,0 +1,603 @@
+---
+title: "Comparing models"
+author: "Math 315: Bayesian Statistics"
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(rjags)
+library(coda)
+library(ggplot2)
+library(ggthemes)
+
+fev <- read.csv("http://aloy.rbind.io/data/fev.csv")
+```
+
+# Example
+
+.large[
+
+**Goal:** investigate the association between smoking and lung capacity using data from 345 adolescents between the ages of 10 and 19. 
+
+**Wrinkle:** Lung function is expected to increase during adolescence, but smoking may slow it's progression 
+
+Variable | Description
+:---------|:---------------
+`FEV`    | forced expiratory volume (in liters per second)
+`Age`    | age in years
+`Smoke`  | `Smoker` or `Nonsmoker`
+
+]
+
+.footnote[
+Source: Rosner (2006) 
+]
+
+---
+
+class: clear, middle
+
+```{r echo=FALSE, fig.width = 7, fig.height = 3.5, fig.align='center', out.width = "100%"}
+ggplot(data = fev) +
+  geom_point(aes(x = Age, y = FEV, color = Smoke, shape = Smoke), alpha = 0.6) +
+  facet_wrap(~Smoke) +
+  scale_color_colorblind() +
+  labs(y = "FEV (in L/s)") +
+  theme_bw()
+```
+
+---
+
+# Candidate models
+
+.large[
+Model | Mean function
+:------:|:----------------
+1 | $\mu_i = \beta_0 + \beta_1 {\tt age}_i$
+2 | $\mu_i = \beta_0 + \beta_1 {\tt smoke}_i$
+3 | $\mu_i = \beta_0 + \beta_1 {\tt age}_i + \beta_2 {\tt age}_i$
+4 | $\mu_i = \beta_0 + \beta_1 {\tt age}_i + \beta_2 {\tt age}_i + \beta_2 {\tt age}_i \times {\tt smoke}_i$
+]
+
+---
+
+# k-fold cross validation
+
+.large[
+1. split the data into $k$ equally-sized groups
+
+2. set aside group $k$ as a test set; <br> fit model to the other $k-1$ groups
+
+3. make predictions for group $k$ using the fitted model
+
+4. repeat steps 2-3 $k$ times (i.e. $k$ "folds"), each time holding out a different group
+
+5. calculate performance metrics from each validation set
+
+6. average each metric over the $k$ folds to come up with a single estimate of that metric
+]
+
+---
+
+# k-fold cross validation
+
+```{r echo=FALSE}
+knitr::include_graphics("figs/k-folds.png")
+```
+
+.footnote[Image courtesy of Dennis Sun]
+
+---
+
+# k-fold cross validation
+
+.large[
+
+- Usually $k=5$ or 10
+
+- $k=n$ is leave-one-out cross validation
+
+- You can use either the posterior mean or median for the predicted value, $\widehat{Y}_i$
+
+- Predictive performance metrics:
+
+    + Bias
+    + Mean squared error (MSE)
+    + Mean absolute deviation (MAD)
+    + Coverage of prediction intervals (PIs)
+    + Average width of PIs
+
+- Overall fit:
+
+  + Log score
+
+]
+
+---
+
+# k-fold cross validation
+
+```{r include=FALSE}
+X <- model.matrix(lm( FEV ~ Age*Smoke, data=fev))
+colnames(X) <- c("int", "age", "smoke", "age:smoke")
+
+X1 <- X[,1:2]
+X2 <- X[,c(1, 3)]
+X3 <- X[,1:3]
+X4 <- X
+
+Y <- fev$FEV
+
+m1 <- "model{
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+     }
+     beta[1] ~ dnorm(0,0.001)
+     beta[2] ~ dnorm(0,0.001)
+     tau     ~ dgamma(0.1, 0.1)
+   }"
+
+m2 <- "model{
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+     }
+     beta[1] ~ dnorm(0,0.001)
+     beta[2] ~ dnorm(0,0.001)
+     tau     ~ dgamma(0.1, 0.1)
+   }"
+
+m3 <- "model{
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+     }
+     beta[1] ~ dnorm(0,0.001)
+     beta[2] ~ dnorm(0,0.001)
+     beta[3] ~ dnorm(0,0.001)
+     tau     ~ dgamma(0.1, 0.1)
+   }"
+
+m4 <- "model{
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+     }
+     beta[1] ~ dnorm(0,0.001)
+     beta[2] ~ dnorm(0,0.001)
+     beta[3] ~ dnorm(0,0.001)
+     beta[4] ~ dnorm(0,0.001)
+     tau     ~ dgamma(0.1, 0.1)
+   }"
+```
+
+
+```{r include=FALSE, cache=TRUE}
+# Load data
+fev <- read.csv("http://aloy.rbind.io/data/fev.csv")
+
+# Randomly assign observations to k=5 folds
+set.seed(11072019)
+fold <- rep(1:5, times = nrow(fev)/5)
+fold <- sample(folds)
+
+# Storage
+Y_mean   <- matrix(NA, nrow(fev), 4)
+Y_low    <- matrix(NA, nrow(fev), 4)
+Y_high   <- matrix(NA, nrow(fev), 4)
+
+# Select training data with fold not equal to f
+for(f in 1:5){
+  d1 <- list(Y = Y[fold!=f], n = sum(fold != f), X = X1[fold != f,])
+  d2 <- list(Y = Y[fold!=f], n = sum(fold != f), X = X2[fold != f,])
+  d3 <- list(Y = Y[fold!=f], n = sum(fold != f), X = X3[fold != f,])
+  d4 <- list(Y = Y[fold!=f], n = sum(fold != f), X = X4[fold != f,])
+  params <- c("beta", "tau")
+  
+  # Model 1
+  model1 <- jags.model(textConnection(m1), data = d1, n.chains = 1, quiet = TRUE)
+  update(model1, 10000, progress.bar="none")
+  b1 <- coda.samples(model1, variable.names = params, thin = 5, n.iter = 20000, progress.bar="none")[[1]]
+  
+  # Model 2
+  model2 <- jags.model(textConnection(m2), data = d2, n.chains = 1, quiet = TRUE)
+  update(model2, 10000, progress.bar="none")
+  b2 <- coda.samples(model1, variable.names = params, thin = 5, n.iter = 20000, progress.bar="none")[[1]]
+  
+  # Model 3
+  model3 <- jags.model(textConnection(m3), data = d3, n.chains = 1, quiet = TRUE)
+  update(model3, 10000, progress.bar="none")
+  b3 <- coda.samples(model3, variable.names = params, thin = 5, n.iter = 20000, progress.bar="none")[[1]]
+  
+  # Model 4
+  model4 <- jags.model(textConnection(m4), data = d4, n.chains = 1, quiet = TRUE)
+  update(model4, 10000, progress.bar="none")
+  b4 <- coda.samples(model4, variable.names = params, thin = 5, n.iter = 20000, progress.bar="none")[[1]]
+
+  # Make predictions
+  post1.est <- summary(b1)$statistics
+  post2.est <- summary(b2)$statistics
+  post3.est <- summary(b3)$statistics
+  post4.est <- summary(b4)$statistics
+  for(i in 1:nrow(X)) {
+    if(fold[i] == f){
+      Y1 <- rnorm(n = nrow(b1), mean = X1[i,] %*% post1.est[1:2,1], sd = 1/sqrt(post1.est[3,1]))
+      Y_mean[i, 1] <- mean(Y1)
+      Y_low[i,1]    <- quantile(Y2, 0.025)
+      Y_high[i,1]   <- quantile(Y2, 0.975)
+      
+      Y2 <- rnorm(n = nrow(b2), mean = X2[i,] %*% post2.est[1:2,1], sd = 1/sqrt(post2.est[3,1]))
+      Y_mean[i, 2] <- mean(Y2)
+      Y_low[i, 2]    <- quantile(Y2, 0.025)
+      Y_high[i, 2]   <- quantile(Y2, 0.975)
+      
+      Y3 <- rnorm(n = nrow(b3), mean = X3[i,] %*% post3.est[1:3,1], sd = 1/sqrt(post3.est[4,1]))
+      Y_mean[i, 3] <- mean(Y3)
+      Y_low[i, 3]    <- quantile(Y3, 0.025)
+      Y_high[i, 3]   <- quantile(Y3, 0.975)
+      
+      Y4 <- rnorm(n = nrow(b4), mean = X4[i,] %*% post4.est[1:4,1], sd = 1/sqrt(post4.est[5,1]))
+      Y_mean[i, 4] <- mean(Y4)
+      Y_low[i, 4]    <- quantile(Y4, 0.025)
+      Y_high[i, 4]   <- quantile(Y4, 0.975)
+    }   
+  }
+  
+  rm(model1, model2, model3, model4)
+  
+}
+
+# Calculating metrics
+cv_results <- rbind(
+  bias  = colMeans(Y_mean - Y),
+  mse   = colMeans((Y_mean-Y)^2),
+  mad   = colMeans(abs(Y_mean-Y)),
+  cov   = colMeans( (Y_low <= Y) & (Y <= Y_high)),
+  width = colMeans(Y_high - Y_low)
+)
+colnames(cv_results) <- c("m1", "m2", "m3", "m4")
+
+```
+
+.large[
+```{r echo=FALSE}
+knitr::kable(cv_results, format = "markdown", digits = 3)
+```
+
+<br>
+
+.content-box-yellow[
+Assumption: the "true" model
+likely produces better out-of-sample predictions than
+competing models
+]
+]
+
+
+---
+
+# k-fold cross validation
+
+.large[
+**Advantages:** Simple, intuitive, and broadly applicable
+
+**Disadvantages:** Slow because it requires several model fits
+and it is hard to say a difference is statistically significant
+]
+
+---
+
+# Information criteria
+
+.large[
+- Several information criteria have been proposed that do
+not require fitting the model several times
+
+- All criteria attempt to approximate the out-of-sample predictive accuracy in some way
+
+- Many are functions of the deviance
+
+    + Bayesian information criteria (BIC)
+    
+    + Deviance information criteria (DIC)
+    
+    + Widely applicable information criteria (WAIC)
+]
+    
+---
+
+# Kullback-Leibler Divergence
+
+.large[
+Target distribution: $p(x)$
+
+Approximation: $q(x)$
+
+Let $p(x)$ and $q(x)$ be two PMFs, then
+
+$$D_{KL}(p, q) = \sum_i p_i \left[ \log p_i - \log q_i \right].$$
+
+If $p(x)$ and $q(x)$ are PDFs, then
+
+$$D_{KL}(p, q) = \int_{- \infty}^\infty p_i \left[ \log p_i - \log q_i \right]dx.$$
+
+.content-box-yellow[Measure of how much information is lost due to the approx]
+
+]
+
+---
+
+# Kullback-Leibler Divergence
+
+.large[
+But we don't know $p(x)$, the true distribution!
+
+This isn't necessary for model comparisons
+
+Let $q(x)$ and $r(x)$ denote two competing models (distributions).
+]
+
+\begin{align*}
+&D_{KL}(p, q) - D_{KL}(p, r)\\ 
+&=\sum_i p(x_i) \left[ \log p(x_i) - \log q(x_i) \right] - \sum_i p(x_i) \left[ \log p(x_i) - \log r(x_i) \right]\\
+&= {\rm E}\left[ \log q(x_i) \right] - {\rm E}\left[ \log r(x_i) \right]
+\end{align*}
+
+.large[
+Measures the difference in average log probabilities
+]
+
+---
+
+# Deviance
+
+.large[
+$$D(q) = -2 \sum_i \log(q_i) = -2 \times \text{log likelihood}$$
+
+The relative K-L divergence can be expressed in terms of deviance:
+
+\begin{align*}
+D_{KL}(p, q) - D_{KL}(p, r) &= \frac{1}{n} \sum_i \log(q_i) - \frac{1}{n}\sum_i \log(r_i)\\
+&= - \frac{1}{2n} \left[ D(q) - D(r) \right]
+\end{align*}
+
+Thus, we can compare deviances rather than K-L divergences
+]
+
+
+---
+
+# BIC
+
+.large[
+
+$${\rm BIC} = \underset{\text{within sample deviance}}{\underbrace{-2 \log \left[ f(Y | \widehat{\theta}_{ML}) \right]}} + \underset{\text{penalty term}}{\underbrace{p\log(n)}}$$
+
+<br>
+
+Only reliable when
+
+- Using flat priors or priors are overwhelmed by the likelihood
+
+- Posterior distribution is approximately multivariate normal
+
+- $n >> p$
+
+Can't account for informative priors or more complex models
+]
+
+---
+
+# DIC
+
+.large[
+
+${\rm DIC} = \underset{\text{expected deviance}}{\underbrace{{\rm E} \left[ -2 \log\left( f(Y| \theta) \right) \right]}} + p_D$
+
+- $p_D = {\rm E} \left[ -2 \log\left( f(Y| \theta) \right) \right] - \left[ -2 \log\left( f(Y| \widehat{\theta}) \right) \right]$,  $\widehat{\theta} ={\rm E}(\theta | Y)$ 
+
+- $p_D =$ effective number of parameters 
+
+Computational formula: 
+
+- ${\rm DIC} = \overline{D} + (\overline{D} - \widehat{D}) = 2\overline{D} - \widehat{D}$
+
+- deviance has a posterior distribution, it's a function of $\theta$
+
+
+
+]
+
+---
+
+# DIC
+
+.large[
+- Models with small $\overline{D}$ fit the data well
+
+- Models with small $p_D$ are simple
+
+- We prefer models that are simple and fit well $\Rightarrow$ smallest DIC
+
+- Effective number of parameters
+
+    + If you have uninformative priors, $p_D \approx p$
+    
+    + With strong priors $p_D << p$
+]
+
+
+---
+
+# DIC
+
+.large[
+- Rule of thumb: a difference of DIC of less than 5 is not definitive and a difference greater than 10 is substantial
+
+- `dic.samples()` function in **coda** R package
+
+- DIC can only be used to compare models *with the same likelihood*
+
+- Still requires
+
+    + Posterior distribution is approximately MVN
+
+    + $n >> p$
+]
+
+
+---
+
+# WAIC
+
+.large[
+- Widely application IC (or  Watanabe-Akaike IC)
+- BIC and DIC condition on point estimates of $\theta$
+
+- A better idea is be fully Bayesian and average over the posterior!
+
+- Let $m_i$ be the posterior mean of $f(Y_i | \theta)$
+
+- Let $v_i$ be the posterior variance of $\log[f(Y_i | \theta)]$
+
+- The effective model size is $p_W = \sum v_i$
+
+$${\rm WAIC} =-2 \sum_{i=1}^n m_i + 2p_W$$
+
+]
+
+---
+
+# WAIC
+
+.large[
+- Smaller WAIC is preferred
+
+- DIC and WAIC often give similar results, but WAIC is arguably more theoretically justified
+
+- Motivated as an approximation to leave-one-out CV
+
+- Not implemented in **coda**, but reasonable to compute "manually"
+]
+
+---
+
+```{r}
+m4 <- "model{
+
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+       like[i]  <- dnorm(Y[i], mu[i], tau) #<<
+     }
+     
+     for(j in 1:4) {
+        beta[j] ~ dnorm(0,0.001)
+     }
+     tau ~ dgamma(0.1, 0.1)
+   }"
+
+d4 <- list(Y = Y, X = X, n = nrow(X))
+model4 <- jags.model(textConnection(m4), data = d4, quiet = TRUE)
+update(model4, 1000, progress.bar="none")
+draws4 <- coda.samples(model4, variable.names = "like", 
+                       n.iter = 20000, progress.bar = "none")
+
+# Compute WAIC
+like  <- draws4[[1]]                     #<<
+fbar  <- colMeans(like)                  #<<
+pw    <- sum(apply(log(like), 2, var))   #<<
+waic  <- -2 * sum(log(fbar)) + 2 * pw    #<<
+```
+
+---
+
+# Example
+
+```{r include=FALSE, cache=TRUE}
+waic.results <- c(m1 = NA, m2 = NA, m3 = NA, m4 = waic)
+
+m1 <- "model{
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+       like[i]  <- dnorm(Y[i], mu[i], tau)
+     }
+     beta[1] ~ dnorm(0,0.001)
+     beta[2] ~ dnorm(0,0.001)
+     tau     ~ dgamma(0.1, 0.1)
+   }"
+
+m2 <- "model{
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+       like[i]  <- dnorm(Y[i], mu[i], tau)
+     }
+     beta[1] ~ dnorm(0,0.001)
+     beta[2] ~ dnorm(0,0.001)
+     tau     ~ dgamma(0.1, 0.1)
+   }"
+
+m3 <- "model{
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] <- inprod(X[i,], beta[])
+       like[i]  <- dnorm(Y[i], mu[i], tau)
+     }
+     beta[1] ~ dnorm(0,0.001)
+     beta[2] ~ dnorm(0,0.001)
+     beta[3] ~ dnorm(0,0.001)
+     tau     ~ dgamma(0.1, 0.1)
+   }"
+
+
+d1 <- list(Y = Y, n = nrow(X), X = X1)
+d2 <- list(Y = Y, n = nrow(X), X = X2)
+d3 <- list(Y = Y, n = nrow(X), X = X3)
+params <- "like"
+
+# Model 1
+model1 <- jags.model(textConnection(m1), data = d1, n.chains = 1, quiet = TRUE)
+update(model1, 10000, progress.bar="none")
+draws1 <- coda.samples(model1, variable.names = params, thin = 5, n.iter = 20000, progress.bar="none")[[1]]
+
+waic.results["m1"]  <- -2 * sum(log(colMeans(draws1))) + 2 * sum(apply(log(draws1), 2, var))
+
+# Model 2
+model2 <- jags.model(textConnection(m2), data = d2, n.chains = 1, quiet = TRUE)
+update(model2, 10000, progress.bar="none")
+draws2 <- coda.samples(model1, variable.names = params, thin = 5, n.iter = 20000, progress.bar="none")[[1]]
+
+waic.results["m2"]  <- -2 * sum(log(colMeans(draws2))) + 2 * sum(apply(log(draws2), 2, var))
+
+# Model 3
+model3 <- jags.model(textConnection(m3), data = d3, n.chains = 1, quiet = TRUE)
+update(model3, 10000, progress.bar="none")
+draws3 <- coda.samples(model3, variable.names = params, thin = 5, n.iter = 20000, progress.bar="none")[[1]]
+
+waic.results["m3"]  <- -2 * sum(log(colMeans(draws3))) + 2 * sum(apply(log(draws3), 2, var))
+```
+
+.large[
+Model | Variables |  WAIC
+------|-----------|-------
+1     | `age`                       | `r round(waic.results[1], 1)`
+2     | `smoke`                     |`r round(waic.results[2], 1)`
+3     | `age`, `smoke`              |`r round(waic.results[3], 1)`
+4     | `age`, `smoke`, `age:smoke` |`r round(waic.results[4], 1)`
+
+<br>
+
+.content-box-yellow[Which model is preferred?]
+]

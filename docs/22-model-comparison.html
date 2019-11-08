@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Comparing models</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Comparing models
+### Math 315: Bayesian Statistics
+
+---
+
+
+
+
+# Example
+
+.large[
+
+**Goal:** investigate the association between smoking and lung capacity using data from 345 adolescents between the ages of 10 and 19. 
+
+**Wrinkle:** Lung function is expected to increase during adolescence, but smoking may slow it's progression 
+
+Variable | Description
+:---------|:---------------
+`FEV`    | forced expiratory volume (in liters per second)
+`Age`    | age in years
+`Smoke`  | `Smoker` or `Nonsmoker`
+
+]
+
+.footnote[
+Source: Rosner (2006) 
+]
+
+---
+
+class: clear, middle
+
+&lt;img src="22-model-comparison_files/figure-html/unnamed-chunk-1-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Candidate models
+
+.large[
+Model | Mean function
+:------:|:----------------
+1 | `\(\mu_i = \beta_0 + \beta_1 {\tt age}_i\)`
+2 | `\(\mu_i = \beta_0 + \beta_1 {\tt smoke}_i\)`
+3 | `\(\mu_i = \beta_0 + \beta_1 {\tt age}_i + \beta_2 {\tt age}_i\)`
+4 | `\(\mu_i = \beta_0 + \beta_1 {\tt age}_i + \beta_2 {\tt age}_i + \beta_2 {\tt age}_i \times {\tt smoke}_i\)`
+]
+
+---
+
+# k-fold cross validation
+
+.large[
+1. split the data into `\(k\)` equally-sized groups
+
+2. set aside group `\(k\)` as a test set; &lt;br&gt; fit model to the other `\(k-1\)` groups
+
+3. make predictions for group `\(k\)` using the fitted model
+
+4. repeat steps 2-3 `\(k\)` times (i.e. `\(k\)` "folds"), each time holding out a different group
+
+5. calculate performance metrics from each validation set
+
+6. average each metric over the `\(k\)` folds to come up with a single estimate of that metric
+]
+
+---
+
+# k-fold cross validation
+
+&lt;img src="figs/k-folds.png" width="1613" /&gt;
+
+.footnote[Image courtesy of Dennis Sun]
+
+---
+
+# k-fold cross validation
+
+.large[
+
+- Usually `\(k=5\)` or 10
+
+- `\(k=n\)` is leave-one-out cross validation
+
+- You can use either the posterior mean or median for the predicted value, `\(\widehat{Y}_i\)`
+
+- Predictive performance metrics:
+
+    + Bias
+    + Mean squared error (MSE)
+    + Mean absolute deviation (MAD)
+    + Coverage of prediction intervals (PIs)
+    + Average width of PIs
+
+- Overall fit:
+
+  + Log score
+
+]
+
+---
+
+# k-fold cross validation
+
+
+
+
+
+
+.large[
+
+|      |    m1|     m2|    m3|    m4|
+|:-----|-----:|------:|-----:|-----:|
+|bias  | 0.000| -1.950| 0.001| 0.006|
+|mse   | 0.468|  4.415| 0.463| 0.458|
+|mad   | 0.538|  1.950| 0.542| 0.535|
+|cov   | 0.229|  0.212| 0.930| 0.930|
+|width | 2.645|  2.645| 2.635| 2.594|
+
+&lt;br&gt;
+
+.content-box-yellow[
+Assumption: the "true" model
+likely produces better out-of-sample predictions than
+competing models
+]
+]
+
+
+---
+
+# k-fold cross validation
+
+.large[
+**Advantages:** Simple, intuitive, and broadly applicable
+
+**Disadvantages:** Slow because it requires several model fits
+and it is hard to say a difference is statistically significant
+]
+
+---
+
+# Information criteria
+
+.large[
+- Several information criteria have been proposed that do
+not require fitting the model several times
+
+- All criteria attempt to approximate the out-of-sample predictive accuracy in some way
+
+- Many are functions of the deviance
+
+    + Bayesian information criteria (BIC)
+    
+    + Deviance information criteria (DIC)
+    
+    + Widely applicable information criteria (WAIC)
+]
+    
+---
+
+# Kullback-Leibler Divergence
+
+.large[
+Target distribution: `\(p(x)\)`
+
+Approximation: `\(q(x)\)`
+
+Let `\(p(x)\)` and `\(q(x)\)` be two PMFs, then
+
+`$$D_{KL}(p, q) = \sum_i p_i \left[ \log p_i - \log q_i \right].$$`
+
+If `\(p(x)\)` and `\(q(x)\)` are PDFs, then
+
+`$$D_{KL}(p, q) = \int_{- \infty}^\infty p_i \left[ \log p_i - \log q_i \right]dx.$$`
+
+.content-box-yellow[Measure of how much information is lost due to the approx]
+
+]
+
+---
+
+# Kullback-Leibler Divergence
+
+.large[
+But we don't know `\(p(x)\)`, the true distribution!
+
+This isn't necessary for model comparisons
+
+Let `\(q(x)\)` and `\(r(x)\)` denote two competing models (distributions).
+]
+
+`\begin{align*}
+&amp;D_{KL}(p, q) - D_{KL}(p, r)\\ 
+&amp;=\sum_i p(x_i) \left[ \log p(x_i) - \log q(x_i) \right] - \sum_i p(x_i) \left[ \log p(x_i) - \log r(x_i) \right]\\
+&amp;= {\rm E}\left[ \log q(x_i) \right] - {\rm E}\left[ \log r(x_i) \right]
+\end{align*}`
+
+.large[
+Measures the difference in average log probabilities
+]
+
+---
+
+# Deviance
+
+.large[
+`$$D(q) = -2 \sum_i \log(q_i) = -2 \times \text{log likelihood}$$`
+
+The relative K-L divergence can be expressed in terms of deviance:
+
+`\begin{align*}
+D_{KL}(p, q) - D_{KL}(p, r) &amp;= \frac{1}{n} \sum_i \log(q_i) - \frac{1}{n}\sum_i \log(r_i)\\
+&amp;= - \frac{1}{2n} \left[ D(q) - D(r) \right]
+\end{align*}`
+
+Thus, we can compare deviances rather than K-L divergences
+]
+
+
+---
+
+# BIC
+
+.large[
+
+`$${\rm BIC} = \underset{\text{within sample deviance}}{\underbrace{-2 \log \left[ f(Y | \widehat{\theta}_{ML}) \right]}} + \underset{\text{penalty term}}{\underbrace{p\log(n)}}$$`
+
+&lt;br&gt;
+
+Only reliable when
+
+- Using flat priors or priors are overwhelmed by the likelihood
+
+- Posterior distribution is approximately multivariate normal
+
+- `\(n &gt;&gt; p\)`
+
+Can't account for informative priors or more complex models
+]
+
+---
+
+# DIC
+
+.large[
+
+`\({\rm DIC} = \underset{\text{expected deviance}}{\underbrace{{\rm E} \left[ -2 \log\left( f(Y| \theta) \right) \right]}} + p_D\)`
+
+- `\(p_D = {\rm E} \left[ -2 \log\left( f(Y| \theta) \right) \right] - \left[ -2 \log\left( f(Y| \widehat{\theta}) \right) \right]\)`,  `\(\widehat{\theta} ={\rm E}(\theta | Y)\)` 
+
+- `\(p_D =\)` effective number of parameters 
+
+Computational formula: 
+
+- `\({\rm DIC} = \overline{D} + (\overline{D} - \widehat{D}) = 2\overline{D} - \widehat{D}\)`
+
+- deviance has a posterior distribution, it's a function of `\(\theta\)`
+
+
+
+]
+
+---
+
+# DIC
+
+.large[
+- Models with small `\(\overline{D}\)` fit the data well
+
+- Models with small `\(p_D\)` are simple
+
+- We prefer models that are simple and fit well `\(\Rightarrow\)` smallest DIC
+
+- Effective number of parameters
+
+    + If you have uninformative priors, `\(p_D \approx p\)`
+    
+    + With strong priors `\(p_D &lt;&lt; p\)`
+]
+
+
+---
+
+# DIC
+
+.large[
+- Rule of thumb: a difference of DIC of less than 5 is not definitive and a difference greater than 10 is substantial
+
+- `dic.samples()` function in **coda** R package
+
+- DIC can only be used to compare models *with the same likelihood*
+
+- Still requires
+
+    + Posterior distribution is approximately MVN
+
+    + `\(n &gt;&gt; p\)`
+]
+
+
+---
+
+# WAIC
+
+.large[
+- Widely application IC (or  Watanabe-Akaike IC)
+- BIC and DIC condition on point estimates of `\(\theta\)`
+
+- A better idea is be fully Bayesian and average over the posterior!
+
+- Let `\(m_i\)` be the posterior mean of `\(f(Y_i | \theta)\)`
+
+- Let `\(v_i\)` be the posterior variance of `\(\log[f(Y_i | \theta)]\)`
+
+- The effective model size is `\(p_W = \sum v_i\)`
+
+`$${\rm WAIC} =-2 \sum_{i=1}^n m_i + 2p_W$$`
+
+]
+
+---
+
+# WAIC
+
+.large[
+- Smaller WAIC is preferred
+
+- DIC and WAIC often give similar results, but WAIC is arguably more theoretically justified
+
+- Motivated as an approximation to leave-one-out CV
+
+- Not implemented in **coda**, but reasonable to compute "manually"
+]
+
+---
+
+
+```r
+m4 &lt;- "model{
+
+     for(i in 1:n){
+       Y[i] ~ dnorm(mu[i], tau)
+       mu[i] &lt;- inprod(X[i,], beta[])
+*      like[i]  &lt;- dnorm(Y[i], mu[i], tau)
+     }
+     
+     for(j in 1:4) {
+        beta[j] ~ dnorm(0,0.001)
+     }
+     tau ~ dgamma(0.1, 0.1)
+   }"
+
+d4 &lt;- list(Y = Y, X = X, n = nrow(X))
+model4 &lt;- jags.model(textConnection(m4), data = d4, quiet = TRUE)
+update(model4, 1000, progress.bar="none")
+draws4 &lt;- coda.samples(model4, variable.names = "like", 
+                       n.iter = 20000, progress.bar = "none")
+
+# Compute WAIC
+*like  &lt;- draws4[[1]]
+*fbar  &lt;- colMeans(like)
+*pw    &lt;- sum(apply(log(like), 2, var))
+*waic  &lt;- -2 * sum(log(fbar)) + 2 * pw
+```
+
+---
+
+# Example
+
+
+
+.large[
+Model | Variables |  WAIC
+------|-----------|-------
+1     | `age`                       | 712.8
+2     | `smoke`                     |713
+3     | `age`, `smoke`              |712.5
+4     | `age`, `smoke`, `age:smoke` |703.4
+
+&lt;br&gt;
+
+.content-box-yellow[Which model is preferred?]
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
