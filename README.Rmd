@@ -144,5 +144,5 @@ Date | Reading | Topic | Materials
 8-Nov | BSM 5.1, 5.5 | Model comparisons | [Slides](https://aloy.github.io/math315-fall2019/22-model-comparison.html)
 | | |
 11-Nov | | Wrap up and review |
-13-Nov | Review | Exam 2 | [Study guide](exams/ex2_study_guide_f19.pdf);<br> [Practice problems](exams/ex2_practice_problemsf19.pdf)
+13-Nov | Review | Exam 2 | [Study guide](exams/ex2_study_guide_f19.pdf);<br> [Practice problems](exams/ex2_practice_problemsf19.pdf);<br>[Practice solutions](exams/ex2_practice_solutions.pdf)
 15-Nov | | Bayesian model averaging |
