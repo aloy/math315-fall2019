@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Generalized linear models</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Math 315: Bayesian Statistics" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/hygge.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Generalized linear models
+### Math 315: Bayesian Statistics
+
+---
+
+
+
+
+# Arthritis clinical trial
+
+.large[
+A double-blind clinical trial investigated a new treatment for rheumatoid arthritis 
+
+We'll focus on a subset of the variables:
+
+Variable | Description
+----------|---------------------
+`Better`    | whether the drug improved symptoms &lt;br&gt; 1 = yes, 0 = no
+`Treatment` | Placebo or Treated
+`Sex`       | Male or Female
+`Age`       | Age in years
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+1. What distribution should we use for the response variable, `Better`?
+
+2. How can you transform a linear combination of the predictor to take on values between 0 and 1?
+
+`$$\eta_i = \beta_0 + \beta_1 {\tt Treatment} + \beta_2 {\tt Sex} + \beta_3 {\tt Age}$$`
+]
+
+---
+
+# Data preparation
+
+.large[Load and manipulate data]
+
+
+```r
+arthritis &lt;- read.csv("http://aloy.rbind.io/data/arthritis.csv")
+```
+
+.large[JAGS needs numeric variables, so convert factors to indicators]
+
+
+```r
+X &lt;- cbind(intercept = 1, arthritis[,2:4])
+X$Treatment &lt;- as.numeric(X$Treatment == "Treated")
+X$Sex &lt;- as.numeric(X$Sex == "Male")
+
+dat_list &lt;- list(Y = arthritis$Better, X = X, 
+                 n = nrow(arthritis), p = ncol(X))
+```
+
+---
+
+# Model fitting
+
+
+```r
+# Logistic regression specification
+model_string &lt;- textConnection("model{
+for(i in 1:n){
+  Y[i] ~ dbern(q[i])
+  logit(q[i]) &lt;- inprod(X[i,],beta[])
+}
+
+for(j in 1:p){beta[j] ~ dnorm(0,0.001)}
+}")
+
+# Compile model
+logistic_model &lt;- jags.model(model_string, data = dat_list, 
+                             n.chains = 3, quiet = TRUE)
+
+# Burn in samples
+update(logistic_model, 2000, progress.bar="none")
+
+# Posterior sampling
+post_samples &lt;- coda.samples(logistic_model, variable.names = "beta", 
+                             n.iter = 50000, thin = 30, 
+                             progress.bar="none")
+```
+
+---
+
+# Results
+
+.large[
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; term &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Mean &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; SD &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; 2.5% &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; 97.5% &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; intercept &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -3.23 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -5.75 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -1.00 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Treatment &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.87 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.56 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.82 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.02 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Sex &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -1.61 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.62 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -2.87 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -0.44 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Age &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.05 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.02 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.01 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.10 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;br&gt;
+
+.content-box-yellow[
+**Your turn**
+
+Provide an interpretation of the `Treatment` coefficient in context.
+]
+
+]
+
+
+
+
+---
+
+# Puffin nesting sites
+
+.large[
+Four variables where considered in trying to describe the nesting frequency of the common puffin in a 3m &amp;#215; 3m grid of plots.
+
+
+Variable | Description
+---------|--------------------
+`nests`  | number of nests (burrows) per 9 m&lt;sup&gt;2&lt;/sup&gt; quadrat
+`grass`    | grass cover percentage
+`soil`     | mean soil depth in cm
+`angle`    | angle of slope in degrees
+`distance` | distance from cliff edge in meters
+]
+
+&lt;br&gt;
+&lt;br&gt;
+
+.footnotesize[Source: Nettleship, D. N. (1972). Breeding success of the Common Puffin (Fratercula arctica L.) on different habitats at Great Island, Newfoundland. *Ecological Monographs*, 42(2), 239-268.]
+
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+1. What distribution should we use for the response variable, `nests`?
+
+2. How can you transform a linear combination of the predictor to take on values in `\((0, \infty)\)`?
+
+`$$\lambda_i = \beta_0 + \beta_1 {\tt soil}_i + \beta_2 {\tt distance}_i$$`
+]
+
+---
+
+# Data preparation
+
+.large[Load and manipulate data]
+
+
+```r
+puffin &lt;- read.table(
+  "http://www.markirwin.net/stat149/Data/puffin.txt", header = TRUE
+)
+
+colnames(puffin)[1] &lt;- "nests"
+puffin &lt;- subset(puffin, nests &gt; 0)
+```
+
+.large[Data list for JAGS]
+
+
+```r
+X &lt;- cbind(intercept = 1, puffin[,c("soil", "distance")])
+
+dat_list2 &lt;- list(Y = puffin$nests, X = X, 
+                 n = nrow(puffin), p = ncol(X))
+```
+
+---
+
+# Model fitting
+
+
+```r
+# Logistic regression specification
+puffin_string &lt;- textConnection("model{
+for(i in 1:n){
+  Y[i] ~ dpois(lambda[i])
+  log(lambda[i]) &lt;- inprod(X[i,], beta[])
+}
+
+for(j in 1:p){beta[j] ~ dnorm(0,0.001)}
+}")
+
+# Compile model
+puffin_model &lt;- jags.model(puffin_string, data = dat_list2, 
+                           n.chains = 3, quiet = TRUE)
+
+# Burn in samples
+update(puffin_model, 2000, progress.bar="none")
+
+# Posterior sampling
+puffin_samples &lt;- coda.samples(puffin_model, variable.names = "beta", 
+                               n.iter = 100000, thin = 30, 
+                               progress.bar="none")
+```
+
+---
+
+# Results
+
+.large[
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; term &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Mean &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; SD &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; 2.5% &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; 97.5% &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; intercept &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.2954 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.3470 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.6096 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.9703 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; soil &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0223 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0088 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0052 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0394 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; distance &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -0.0361 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0056 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -0.0470 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -0.0251 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;br&gt;
+
+.content-box-yellow[
+**Your turn**
+
+Provide an interpretation of the `distance` coefficient in context.
+]
+
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

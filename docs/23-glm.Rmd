@@ -1,0 +1,236 @@
+---
+title: "Generalized linear models"
+author: "Math 315: Bayesian Statistics"
+output:
+  xaringan::moon_reader:
+    css: ["default", "default-fonts", "hygge"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(dev = 'svg')
+library(rjags)
+library(coda)
+library(ggplot2)
+library(ggthemes)
+library(rjags)
+library(coda)
+library(broom)
+```
+
+# Arthritis clinical trial
+
+.large[
+A double-blind clinical trial investigated a new treatment for rheumatoid arthritis 
+
+We'll focus on a subset of the variables:
+
+Variable | Description
+----------|---------------------
+`Better`    | whether the drug improved symptoms <br> 1 = yes, 0 = no
+`Treatment` | Placebo or Treated
+`Sex`       | Male or Female
+`Age`       | Age in years
+]
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+1. What distribution should we use for the response variable, `Better`?
+
+2. How can you transform a linear combination of the predictor to take on values between 0 and 1?
+
+$$\eta_i = \beta_0 + \beta_1 {\tt Treatment} + \beta_2 {\tt Sex} + \beta_3 {\tt Age}$$
+]
+
+---
+
+# Data preparation
+
+.large[Load and manipulate data]
+
+```{r}
+arthritis <- read.csv("http://aloy.rbind.io/data/arthritis.csv")
+```
+
+.large[JAGS needs numeric variables, so convert factors to indicators]
+
+```{r}
+X <- cbind(intercept = 1, arthritis[,2:4])
+X$Treatment <- as.numeric(X$Treatment == "Treated")
+X$Sex <- as.numeric(X$Sex == "Male")
+
+dat_list <- list(Y = arthritis$Better, X = X, 
+                 n = nrow(arthritis), p = ncol(X))
+```
+
+---
+
+# Model fitting
+
+```{r cache=TRUE, message=FALSE}
+# Logistic regression specification
+model_string <- textConnection("model{
+for(i in 1:n){
+  Y[i] ~ dbern(q[i])
+  logit(q[i]) <- inprod(X[i,],beta[])
+}
+
+for(j in 1:p){beta[j] ~ dnorm(0,0.001)}
+}")
+
+# Compile model
+logistic_model <- jags.model(model_string, data = dat_list, 
+                             n.chains = 3, quiet = TRUE)
+
+# Burn in samples
+update(logistic_model, 2000, progress.bar="none")
+
+# Posterior sampling
+post_samples <- coda.samples(logistic_model, variable.names = "beta", 
+                             n.iter = 50000, thin = 30, 
+                             progress.bar="none")
+```
+
+---
+
+# Results
+
+.large[
+```{r echo=FALSE, results = "asis"}
+post_sum <- tidyMCMC(post_samples, conf.int = TRUE)
+colnames(post_sum)[2:5] <- c("Mean","SD", "2.5%", "97.5%")
+post_sum[,1] <- colnames(X)
+knitr::kable(post_sum, format = "html", digits = 2)
+```
+
+<br>
+
+.content-box-yellow[
+**Your turn**
+
+Provide an interpretation of the `Treatment` coefficient in context.
+]
+
+]
+
+
+
+
+---
+
+# Puffin nesting sites
+
+.large[
+Four variables where considered in trying to describe the nesting frequency of the common puffin in a 3m &#215; 3m grid of plots.
+
+
+Variable | Description
+---------|--------------------
+`nests`  | number of nests (burrows) per 9 m<sup>2</sup> quadrat
+`grass`    | grass cover percentage
+`soil`     | mean soil depth in cm
+`angle`    | angle of slope in degrees
+`distance` | distance from cliff edge in meters
+]
+
+<br>
+<br>
+
+.footnotesize[Source: Nettleship, D. N. (1972). Breeding success of the Common Puffin (Fratercula arctica L.) on different habitats at Great Island, Newfoundland. *Ecological Monographs*, 42(2), 239-268.]
+
+
+---
+class: inverse
+
+# Your turn
+
+.Large[
+1. What distribution should we use for the response variable, `nests`?
+
+2. How can you transform a linear combination of the predictor to take on values in $(0, \infty)$?
+
+$$\lambda_i = \beta_0 + \beta_1 {\tt soil}_i + \beta_2 {\tt distance}_i$$
+]
+
+---
+
+# Data preparation
+
+.large[Load and manipulate data]
+
+```{r}
+puffin <- read.table(
+  "http://www.markirwin.net/stat149/Data/puffin.txt", header = TRUE
+)
+
+colnames(puffin)[1] <- "nests"
+puffin <- subset(puffin, nests > 0)
+```
+
+.large[Data list for JAGS]
+
+```{r}
+X <- cbind(intercept = 1, puffin[,c("soil", "distance")])
+
+dat_list2 <- list(Y = puffin$nests, X = X, 
+                 n = nrow(puffin), p = ncol(X))
+```
+
+---
+
+# Model fitting
+
+```{r cache=TRUE, message=FALSE}
+# Logistic regression specification
+puffin_string <- textConnection("model{
+for(i in 1:n){
+  Y[i] ~ dpois(lambda[i])
+  log(lambda[i]) <- inprod(X[i,], beta[])
+}
+
+for(j in 1:p){beta[j] ~ dnorm(0,0.001)}
+}")
+
+# Compile model
+puffin_model <- jags.model(puffin_string, data = dat_list2, 
+                           n.chains = 3, quiet = TRUE)
+
+# Burn in samples
+update(puffin_model, 2000, progress.bar="none")
+
+# Posterior sampling
+puffin_samples <- coda.samples(puffin_model, variable.names = "beta", 
+                               n.iter = 100000, thin = 30, 
+                               progress.bar="none")
+```
+
+---
+
+# Results
+
+.large[
+```{r echo=FALSE, results = "asis"}
+puffin_sum <- tidyMCMC(puffin_samples, conf.int = TRUE)
+colnames(puffin_sum)[2:5] <- c("Mean","SD", "2.5%", "97.5%")
+puffin_sum[,1] <- colnames(X)
+knitr::kable(puffin_sum, format = "html", digits = 4)
+```
+
+<br>
+
+.content-box-yellow[
+**Your turn**
+
+Provide an interpretation of the `distance` coefficient in context.
+]
+
+]
