@@ -1,0 +1,112 @@
+---
+title: "Bayesian GLMs"
+author: "Math 315, Fall 2019"
+geometry: "margin=.75in"
+header-includes:
+   - \usepackage{multicol}
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+
+# Example
+
+A 1975 article in *Science* examined the graduate admissions process at U.C. Berkley for evidence of gender bias. In this activity, you will explore these data using logistic regression. The data set contains the following variables:
+
+Variable | Description
+---------|-------------------------
+`dept`             | graduate department 
+`applicant.gender` | applicant's gender
+`admit`            | number of applicants admitted
+`reject`           | number of applicants rejects
+`applications`     | total number of applicants
+
+The data set can be loaded using the below code chunk:
+
+```{r}
+UCBadmit <- read.csv("http://aloy.rbind.io/data/UCBadmit.csv")
+```
+
+Notice that these data present *aggregated binomial counts* rather than a binary response. This is still a logistic regression problem, but instead of a Bernoulli likelihood, a binomial likelihood should be used.
+
+## Tasks
+
+1. Fit a *binomial regression model* using department and applicant gender to estimate the probability of admission. Does there appear to be discrimination in the admission process? Be sure to convert applicant gender and department to numeric variables prior to modeling. The below code may be helpful:
+
+    ```{r}
+    UCBadmit$applicant.gender <- as.numeric(UCBadmit$applicant.gender == "female")
+    UCBadmit$dept <- as.numeric(UCBadmit$dept)
+```
+
+
+2. Fit a *binomial regression model* using only applicant gender to estimate the probability of admission. Calculate prediction intervals for the probability of admission for each case and compare these to the observed proportions. How well does this model fit the data?
+
+## Overdispersion
+
+Hopefully, in part 2 you were able to determine that your predictions were rather horrible. Specifically, your prediction intervals did not capture many of the observed proportions. Omitting a key variable creates *overdispersion* in the model---that is, the observed variance exceeds what is expected under the model. (Just think about how narrow those prediction intervals were!) In this situation, we can fit a *Beta-Binomial regression model* to account for this overdispersion. It's still better to include the key variable, but sometimes key variables are unobserved, making adjustments a reasonable choice.
+
+In a Beta-Binommial regression model, we assume that each binomial count, $Y_i$, has its own probability of success. Consequently, the model estimates the distribution of probabilities of success across cases (rather than a single success probability) and predictor variables change the shape of this distribution (rather than directly determining the probability of each success). The model can be written as follows:
+
+\begin{align*}
+Y_i | p_i &\sim {\rm Binomial}(n_i, p_i)\\
+p_i &\sim {\rm Beta}(\alpha_i, \beta_i)\\
+\alpha_i &= \mu_i \phi\\
+\beta_i &= (1-\mu_i) \phi\\
+{\rm logit}(mu_i) &= \beta_0 + \beta_1 {\tt applicant.gender}\\
+\beta_0, \beta_1 &\sim \mathcal{N}(0, 100)\\
+\theta &\sim {\rm Expo}(1)
+\end{align*}
+
+Here, $\mu_i$ defines the mean of the beta distribution of probabilities for each setting, and $\phi$ is a dispersion parameter. (Don't worry too much about the details, I'm more interested in the comparison to part 2.)
+    
+The JAGS code below implements this model is shown below. Run this code and compare the resulting prediction intervals to those you obtained in part 2. How do they compare?
+    
+```{r}
+library(rjags)
+dat_list <- list(
+  r = nrow(UCBadmit),
+  n = UCBadmit$applications,
+  Y = UCBadmit$admit,
+  applicant.gender = UCBadmit$applicant.gender
+)
+
+# Logistic regression specification
+model_string <- textConnection("model{
+for(i in 1:r){
+  Y[i]  ~ dbin(p[i], n[i])
+  p[i]  ~ dbeta(alpha[i], beta[i])
+  alpha[i] <- mu[i] * phi
+  beta[i]  <- (1 - mu[i]) * phi
+  logit(mu[i]) <- beta0 + beta1 * applicant.gender[i]
+}
+
+beta0 ~ dnorm(0, .01)
+beta1 ~ dnorm(0, .01)
+phi ~ dexp(1)
+
+# Predictions
+for(i in 1:r){
+  pp[i] ~ dbeta(alpha[i], beta[i])
+}
+}")
+
+# Compile model
+logistic_model <- jags.model(model_string, data = dat_list, quiet = TRUE)
+
+# Burn in samples
+update(logistic_model, 2000, progress.bar="none")
+
+# Posterior sampling
+post_samples <- coda.samples(
+  logistic_model, 
+  variable.names = c("beta0", "beta1", "phi", "pp"), 
+  n.iter = 10000, 
+  progress.bar="none"
+)
+```
+    
