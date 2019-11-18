@@ -147,5 +147,5 @@ Date | Reading | Topic | Materials
 13-Nov | Review | Exam 2 | [Study guide](exams/ex2_study_guide_f19.pdf);<br> [Practice problems](exams/ex2_practice_problemsf19.pdf);<br>[Practice solutions](exams/ex2_practice_solutions.pdf)
 15-Nov | BSM 4.3 | Generalized linear models | [Slides](https://aloy.github.io/math315-fall2019/23-glm.html); [UC Berkley example](docs/23H-glm.Rmd)
 | | |
-18-Nov | | Posterior predictive checks |
+18-Nov | BSM 5.6 | Posterior predictive checks | [Slides](https://aloy.github.io/math315-fall2019/24-post-pred-checks.html)
 20-Nov | | Project work day |
