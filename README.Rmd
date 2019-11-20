@@ -95,13 +95,21 @@ Exam 1: Wednesday, October 16
 
 Exam 2: Wednesday, November 13
 
-Project
+[Project](/project)
 
 - [Team assignment questionnaire](https://forms.gle/w9AGeQsZ5ARGWAR29): 4 November by 4:00 p.m.
 
 - Proposal and data: 11 November by 4:00 p.m.
 
 - Final submission: 25 November by 3:00 p.m.
+
+    + Email me the report as a PDF
+    
+    + Email me (or share via Dropbox/Google Drive) the supplemental materials: data, code
+
+    + [Rubric](project/m315-project-rubric-f19.pdf)
+    
+    + [Group evaluation form](https://forms.gle/r8SCT2cboQAhzQ1W9)
 
 ## Daily schedule
 
